@@ -1,0 +1,335 @@
+package com.example
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.model.SkillArea
+import com.example.ui.components.AbleysBottomNavigationBar
+import com.example.ui.components.AbleysTopBar
+import com.example.ui.components.AchievementsListDialog
+import com.example.ui.components.ChildProfileDialog
+import com.example.ui.components.ContextualShopDialog
+import com.example.ui.components.SafetyGuidanceDialog
+import com.example.ui.components.ShareCardDialog
+import com.example.ui.components.YearInGrowingDialog
+import com.example.ui.screens.grow.GrowScreen
+import com.example.ui.screens.grow.InteractiveGameDialog
+import com.example.ui.screens.grow.SkillDetailScreen
+import com.example.ui.screens.milestones.MilestonesScreen
+import com.example.ui.screens.milestones.MilestonesTrackerSheet
+import com.example.ui.screens.move.ActivityDetailScreen
+import com.example.ui.screens.move.ActivityPlayerDialog
+import com.example.ui.screens.move.MoveScreen
+import com.example.ui.screens.story.AddMomentDialog
+import com.example.ui.screens.story.StoryScreen
+import com.example.ui.screens.support.ParentStoryDetailDialog
+import com.example.ui.screens.support.SupportScreen
+import com.example.ui.screens.support.TherapyProgramDetailScreen
+import com.example.ui.screens.support.TherapySessionPlayerDialog
+import com.example.ui.theme.AbleyIvory
+import com.example.ui.theme.AbleysTheme
+import com.example.viewmodel.AbleysViewModel
+import com.example.viewmodel.NavigationTab
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            AbleysTheme {
+                AbleysApp()
+            }
+        }
+    }
+}
+
+@Composable
+fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
+    val childProfile by viewModel.childProfile.collectAsStateWithLifecycle()
+    val skillProgressList by viewModel.skillProgressList.collectAsStateWithLifecycle()
+    val memoriesList by viewModel.memoriesList.collectAsStateWithLifecycle()
+    val achievementsList by viewModel.achievementsList.collectAsStateWithLifecycle()
+    val equipmentList by viewModel.equipmentList.collectAsStateWithLifecycle()
+    val milestonesList by viewModel.milestonesList.collectAsStateWithLifecycle()
+
+    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
+    val supportSubTab by viewModel.supportSubTab.collectAsStateWithLifecycle()
+
+    val selectedSkillForDetail by viewModel.selectedSkillForDetail.collectAsStateWithLifecycle()
+    val activeGameSkill by viewModel.activeGameSkill.collectAsStateWithLifecycle()
+
+    val selectedMoveActivity by viewModel.selectedMoveActivity.collectAsStateWithLifecycle()
+    val activeMovePlayerActivity by viewModel.activeMovePlayerActivity.collectAsStateWithLifecycle()
+
+    val selectedTherapyProgram by viewModel.selectedTherapyProgram.collectAsStateWithLifecycle()
+    val activeTherapyPlayerProgram by viewModel.activeTherapyPlayerProgram.collectAsStateWithLifecycle()
+
+    val selectedParentStory by viewModel.selectedParentStory.collectAsStateWithLifecycle()
+    val activeShareCard by viewModel.activeShareCard.collectAsStateWithLifecycle()
+    val contextualShopProduct by viewModel.contextualShopProduct.collectAsStateWithLifecycle()
+
+    val yearInGrowingOpen by viewModel.yearInGrowingOpen.collectAsStateWithLifecycle()
+    val addMomentDialogOpen by viewModel.addMomentDialogOpen.collectAsStateWithLifecycle()
+    val profileSettingsOpen by viewModel.profileSettingsOpen.collectAsStateWithLifecycle()
+    val achievementsModalOpen by viewModel.achievementsModalOpen.collectAsStateWithLifecycle()
+    val milestonesTrackerOpen by viewModel.milestonesTrackerOpen.collectAsStateWithLifecycle()
+    val safetyGuidanceText by viewModel.safetyGuidanceText.collectAsStateWithLifecycle()
+    val feedbackToast by viewModel.feedbackToast.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(feedbackToast) {
+        feedbackToast?.let { msg ->
+            snackbarHostState.showSnackbar(
+                message = msg,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearToast()
+        }
+    }
+
+    // Hardware Back Button handling for detail views
+    BackHandler(enabled = selectedSkillForDetail != null) {
+        viewModel.closeSkillDetail()
+    }
+    BackHandler(enabled = selectedMoveActivity != null) {
+        viewModel.closeMoveActivityDetail()
+    }
+    BackHandler(enabled = selectedTherapyProgram != null) {
+        viewModel.closeTherapyProgramDetail()
+    }
+    BackHandler(enabled = milestonesTrackerOpen) {
+        viewModel.closeMilestonesTracker()
+    }
+
+    val childName = childProfile?.name ?: "Aarav"
+    val showSupportTab = childProfile?.supportLayerEnabled ?: true
+
+    Scaffold(
+        containerColor = AbleyIvory,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            // Show main top bar only when not inside a full-screen detail or milestones screen
+            if (selectedSkillForDetail == null && selectedMoveActivity == null && selectedTherapyProgram == null && !milestonesTrackerOpen) {
+                AbleysTopBar(
+                    childProfile = childProfile,
+                    onOpenProfileSettings = { viewModel.openProfileSettings() },
+                    onOpenYearInGrowing = { viewModel.openYearInGrowing() },
+                    onOpenAchievements = { viewModel.openAchievementsModal() }
+                )
+            }
+        },
+        bottomBar = {
+            // Show bottom navigation on main tabs
+            if (selectedSkillForDetail == null && selectedMoveActivity == null && selectedTherapyProgram == null && !milestonesTrackerOpen) {
+                AbleysBottomNavigationBar(
+                    currentTab = selectedTab,
+                    onTabSelected = { viewModel.selectTab(it) },
+                    showSupportTab = showSupportTab
+                )
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AbleyIvory)
+                .padding(innerPadding)
+        ) {
+            when {
+                selectedSkillForDetail != null -> {
+                    val skillArea = selectedSkillForDetail!!
+                    val progress = skillProgressList.firstOrNull { it.skillAreaId == skillArea.id }
+                    SkillDetailScreen(
+                        skillArea = skillArea,
+                        progress = progress,
+                        onBack = { viewModel.closeSkillDetail() },
+                        onStartGame = { viewModel.startSkillGame(skillArea) },
+                        onOpenShopItem = { viewModel.openContextualShopForSku(it) }
+                    )
+                }
+                selectedMoveActivity != null -> {
+                    ActivityDetailScreen(
+                        activity = selectedMoveActivity!!,
+                        equipmentList = equipmentList,
+                        onBack = { viewModel.closeMoveActivityDetail() },
+                        onStartActivity = { viewModel.startMovePlayer(selectedMoveActivity!!) },
+                        onOpenShopItem = { viewModel.openContextualShopForSku(it) }
+                    )
+                }
+                selectedTherapyProgram != null -> {
+                    TherapyProgramDetailScreen(
+                        program = selectedTherapyProgram!!,
+                        equipmentList = equipmentList,
+                        onBack = { viewModel.closeTherapyProgramDetail() },
+                        onStartSession = { viewModel.startTherapyPlayer(selectedTherapyProgram!!) },
+                        onShowSafetyGuidance = { viewModel.showSafetyGuidance(it) },
+                        onOpenShopItem = { viewModel.openContextualShopForSku(it) }
+                    )
+                }
+                milestonesTrackerOpen -> {
+                    MilestonesScreen(
+                        childName = childName,
+                        onBack = { viewModel.closeMilestonesTracker() }
+                    )
+                }
+                else -> {
+                    when (selectedTab) {
+                        NavigationTab.GROW -> {
+                            GrowScreen(
+                                childProfile = childProfile,
+                                skillProgressList = skillProgressList,
+                                onSelectSkill = { viewModel.openSkillDetail(it) },
+                                onOpenAchievements = { viewModel.openAchievementsModal() },
+                                milestonesList = milestonesList,
+                                onOpenMilestones = { viewModel.openMilestonesTracker() },
+                                onStartSkillPractice = { viewModel.startSkillGame(it) }
+                            )
+                        }
+                        NavigationTab.MOVE -> {
+                            MoveScreen(
+                                childProfile = childProfile,
+                                activities = viewModel.moveActivities,
+                                equipmentList = equipmentList,
+                                onSelectActivity = { viewModel.selectMoveActivity(it) },
+                                onOpenShopItem = { viewModel.openContextualShopForSku(it) },
+                                onStartActivityNow = { viewModel.startMovePlayer(it) }
+                            )
+                        }
+                        NavigationTab.STORY -> {
+                            StoryScreen(
+                                childProfile = childProfile,
+                                memories = memoriesList,
+                                onAddMomentClick = { viewModel.openAddMoment() },
+                                onShareMemory = { viewModel.openShareCard(it) }
+                            )
+                        }
+                        NavigationTab.SUPPORT -> {
+                            SupportScreen(
+                                childProfile = childProfile,
+                                currentSubTab = supportSubTab,
+                                onSelectSubTab = { viewModel.selectSupportSubTab(it) },
+                                therapyPrograms = viewModel.therapyPrograms,
+                                parentStories = viewModel.parentStories,
+                                onSelectProgram = { viewModel.selectTherapyProgram(it) },
+                                onSelectStory = { viewModel.selectParentStory(it) },
+                                onStartSession = { viewModel.startTherapyPlayer(it) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Active Modals & Dialogs
+    activeGameSkill?.let { skillArea ->
+        InteractiveGameDialog(
+            skillArea = skillArea,
+            onDismiss = { viewModel.closeSkillGame() },
+            onCompleteGame = { xpGain -> viewModel.completeSkillGame(skillArea, xpGain) }
+        )
+    }
+
+    activeMovePlayerActivity?.let { activity ->
+        ActivityPlayerDialog(
+            activity = activity,
+            childName = childName,
+            onDismiss = { viewModel.closeMovePlayer() },
+            onCompleteActivity = { viewModel.completeMoveActivity(activity) }
+        )
+    }
+
+    activeTherapyPlayerProgram?.let { program ->
+        TherapySessionPlayerDialog(
+            program = program,
+            childName = childName,
+            onDismiss = { viewModel.closeTherapyPlayer() },
+            onCompleteSession = { viewModel.completeTherapySession(program) }
+        )
+    }
+
+    selectedParentStory?.let { story ->
+        ParentStoryDetailDialog(
+            story = story,
+            onDismiss = { viewModel.closeParentStory() }
+        )
+    }
+
+    activeShareCard?.let { shareData ->
+        ShareCardDialog(
+            initialData = shareData,
+            onDismiss = { viewModel.closeShareCard() }
+        )
+    }
+
+    contextualShopProduct?.let { product ->
+        ContextualShopDialog(
+            product = product,
+            onDismiss = { viewModel.closeContextualShop() },
+            onToggleOwned = { sku, owned -> viewModel.toggleEquipmentOwned(sku, owned) }
+        )
+    }
+
+    safetyGuidanceText?.let { guidance ->
+        SafetyGuidanceDialog(
+            guidanceText = guidance,
+            onDismiss = { viewModel.closeSafetyGuidance() }
+        )
+    }
+
+    if (achievementsModalOpen) {
+        AchievementsListDialog(
+            achievements = achievementsList,
+            childName = childName,
+            onDismiss = { viewModel.closeAchievementsModal() },
+            onShareAchievement = { viewModel.openShareCard(it) }
+        )
+    }
+
+    if (yearInGrowingOpen) {
+        YearInGrowingDialog(
+            childName = childName,
+            onDismiss = { viewModel.closeYearInGrowing() },
+            onShareSummary = { viewModel.openShareCard(it) }
+        )
+    }
+
+    if (addMomentDialogOpen) {
+        AddMomentDialog(
+            childName = childName,
+            onDismiss = { viewModel.closeAddMoment() },
+            onSaveMoment = { title, caption, dateStr, emoji ->
+                viewModel.saveParentMoment(title, caption, dateStr, emoji)
+            }
+        )
+    }
+
+    if (profileSettingsOpen) {
+        ChildProfileDialog(
+            profile = childProfile,
+            onDismiss = { viewModel.closeProfileSettings() },
+            onSaveProfile = { name, age -> viewModel.updateChildProfile(name, age) },
+            onToggleSupportLayer = { enabled -> viewModel.toggleSupportLayer(enabled) }
+        )
+    }
+}
+

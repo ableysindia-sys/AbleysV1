@@ -1,0 +1,7 @@
+{
+  "name": "Abley's",
+  "description": "Learn together. Move together. Remember it forever. Child development milestones, physical movement, and memory timeline with home therapy support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
