@@ -54,6 +54,19 @@ object PlayModeAssignments {
         "deep_pressure_body_map" to 25
     )
 
+    private val squeezes: Map<String, Int> = mapOf(
+        "putty_squeeze_and_release" to 12,
+        "strat_squeeze_something" to 10
+    )
+
+    // The only two surfaces in the app with nothing to finish. Both are settling activities
+    // where the instruction is essentially "watch something slow until you feel better", and a
+    // progress bar on that would be working against the activity.
+    private val sensoryToys: Set<String> = setOf(
+        "strat_calm_place_imagery",
+        "linear_rocking_rounds"
+    )
+
     /** Applies the assignments above. Anything unlisted is returned untouched. */
     fun apply(activities: List<MoveActivity>): List<MoveActivity> = activities.map { activity ->
         when {
@@ -69,10 +82,16 @@ object PlayModeAssignments {
                 playMode = PlayMode.STEADY_HOLD,
                 holdSeconds = steadyHolds.getValue(activity.id)
             )
+            squeezes.containsKey(activity.id) -> activity.copy(
+                playMode = PlayMode.SQUEEZE,
+                targetSqueezes = squeezes.getValue(activity.id)
+            )
+            activity.id in sensoryToys -> activity.copy(playMode = PlayMode.SENSORY_TOY)
             else -> activity
         }
     }
 
     /** Ids this object expects to find, so a test can catch a rename in the source corpus. */
-    val assignedIds: Set<String> = breathing.keys + tracing.keys + steadyHolds.keys
+    val assignedIds: Set<String> =
+        breathing.keys + tracing.keys + steadyHolds.keys + squeezes.keys + sensoryToys
 }

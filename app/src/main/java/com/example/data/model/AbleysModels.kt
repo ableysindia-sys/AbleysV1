@@ -96,7 +96,13 @@ enum class PlayMode {
     TRACE_PATH,
 
     /** Phone held or balanced on; the accelerometer measures stillness. */
-    STEADY_HOLD
+    STEADY_HOLD,
+
+    /** A soft body that squashes under a finger and bulges out elsewhere. */
+    SQUEEZE,
+
+    /** Slow thick liquid with no goal, no timer and nothing to fail. */
+    SENSORY_TOY
 }
 
 /** Shapes the trace game can draw. */
@@ -154,7 +160,9 @@ data class MoveActivity(
     val breathPattern: BreathPattern? = null,
     val traceShape: TraceShape? = null,
     /** Seconds of stillness a STEADY_HOLD activity asks for. */
-    val holdSeconds: Int = 0
+    val holdSeconds: Int = 0,
+    /** Squeezes a SQUEEZE activity asks for. */
+    val targetSqueezes: Int = 0
 )
 
 /** One day of a multi-day Move programme, pointing at an activity in the catalogue. */

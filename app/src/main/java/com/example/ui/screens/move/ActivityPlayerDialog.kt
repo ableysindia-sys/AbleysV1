@@ -66,6 +66,15 @@ import com.example.data.model.TraceShape
 import com.example.ui.play.BreathPacerGame
 import com.example.ui.play.TracePathGame
 import com.example.ui.play.SteadyHoldGame
+import com.example.ui.play.SqueezeGame
+import com.example.ui.play.LiquidMotionToy
+import com.example.ui.play.GentleReward
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
+import com.example.play.feedback.AmbientSound
 
 @Composable
 fun ActivityPlayerDialog(
@@ -75,6 +84,26 @@ fun ActivityPlayerDialog(
     onCompleteActivity: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val playerContext = LocalContext.current
+    val ambient = remember { AmbientSound() }
+    var soundOn by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) { onDispose { ambient.stop() } }
+
+    LaunchedEffect(soundOn, activity.playMode) {
+        if (soundOn) {
+            ambient.start(
+                when (activity.playMode) {
+                    PlayMode.BREATH_PACER -> AmbientSound.Bed.BREATH_WASH
+                    PlayMode.TRACE_PATH, PlayMode.STEADY_HOLD -> AmbientSound.Bed.PINK_NOISE
+                    else -> AmbientSound.Bed.BROWN_NOISE
+                }
+            )
+        } else {
+            ambient.stop()
+        }
+    }
+
     val totalSteps = activity.demonstrationSteps.size
     var currentStepIndex by remember { mutableIntStateOf(0) }
     var secondsRemaining by remember { mutableIntStateOf(30) }
@@ -162,6 +191,24 @@ fun ActivityPlayerDialog(
 
                     val haptics = LocalHapticFeedback.current
 
+                    TextButton(
+                        onClick = { soundOn = !soundOn },
+                        modifier = Modifier.testTag("ambient_sound_toggle")
+                    ) {
+                        Icon(
+                            imageVector = if (soundOn) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                            contentDescription = null,
+                            tint = AbleyInk.copy(alpha = 0.55f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.size(6.dp))
+                        Text(
+                            text = if (soundOn) "Sound on" else "Add a quiet sound",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = AbleyInk.copy(alpha = 0.55f)
+                        )
+                    }
+
                     // Fifteen activities in the catalogue play as something other than a timer.
                     // For those the game replaces the clock face; for the rest the clock is right,
                     // because the activity is happening in the room and not on the screen.
@@ -192,6 +239,15 @@ fun ActivityPlayerDialog(
                                     isCompleted = true
                                 }
                             )
+                        }
+                        PlayMode.SQUEEZE -> {
+                            SqueezeGame(
+                                targetSqueezes = activity.targetSqueezes.coerceAtLeast(6),
+                                onComplete = { isCompleted = true }
+                            )
+                        }
+                        PlayMode.SENSORY_TOY -> {
+                            LiquidMotionToy()
                         }
                         PlayMode.GUIDED_STEPS -> GuidedStepsTimer(
                             secondsRemaining = secondsRemaining,
@@ -280,20 +336,9 @@ fun ActivityPlayerDialog(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(vertical = 12.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(72.dp)
-                                .clip(CircleShape)
-                                .background(AbleyTeal.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = AbleyTeal,
-                                modifier = Modifier.size(44.dp)
-                            )
-                        }
+                        // One star that grows and stops. No confetti and no fanfare: this often
+                        // runs at the end of an activity whose whole job was to settle a child.
+                        GentleReward(visible = true)
 
                         Spacer(modifier = Modifier.height(16.dp))
 
