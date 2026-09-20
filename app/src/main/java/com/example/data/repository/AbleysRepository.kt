@@ -538,6 +538,47 @@ class AbleysRepository(context: Context) {
         moveProgramDao.resetProgram("child_default", programId)
     }
 
+    /**
+     * Completes first run for a real family.
+     *
+     * The seeded profile carries the figures from the spec mockups -- 1,240 XP, a twelve-day
+     * streak, 248 minutes moved. They are fine in a deck and dishonest in a shipped app, so a
+     * real child starts every counter at zero and earns the first one.
+     */
+    suspend fun completeOnboarding(
+        name: String,
+        birthMonth: String,
+        avatarEmoji: String,
+        photoUri: String?,
+        supportLayerEnabled: Boolean
+    ) = withContext(Dispatchers.IO) {
+        val existing = childDao.getProfile() ?: ChildProfile()
+        childDao.insertOrUpdateProfile(
+            existing.copy(
+                name = name.ifBlank { existing.name },
+                birthMonth = birthMonth.ifBlank { existing.birthMonth },
+                avatarEmoji = avatarEmoji,
+                photoUri = photoUri,
+                supportLayerEnabled = supportLayerEnabled,
+                isOnboarded = true,
+                totalXp = 0,
+                level = 1,
+                currentStreak = 0,
+                minutesMoved = 0,
+                activeDays = 0
+            )
+        )
+        // Sample memories belong to the demo profile, not to this family's story.
+        memoryDao.deleteAllMemories()
+        Analytics.track(Analytics.ONBOARDING_COMPLETED, mapOf("support_layer" to supportLayerEnabled))
+    }
+
+    /** Keeps the seeded sample figures and skips first run. For demos, never the default. */
+    suspend fun enterSampleDataMode() = withContext(Dispatchers.IO) {
+        childDao.markOnboarded("child_default")
+        Analytics.track(Analytics.ONBOARDING_COMPLETED, mapOf("mode" to "sample_data"))
+    }
+
     suspend fun toggleEquipmentOwned(sku: String, owned: Boolean) = withContext(Dispatchers.IO) {
         equipmentDao.setOwned(sku, owned)
     }

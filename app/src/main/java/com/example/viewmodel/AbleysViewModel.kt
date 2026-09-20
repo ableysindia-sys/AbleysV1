@@ -310,6 +310,23 @@ class AbleysViewModel(application: Application) : AndroidViewModel(application) 
         _addMomentDialogOpen.value = false
     }
 
+    fun completeOnboarding(
+        name: String,
+        birthMonth: String,
+        avatarEmoji: String,
+        photoUri: Uri?,
+        supportLayerEnabled: Boolean
+    ) {
+        viewModelScope.launch {
+            val storedPath = photoUri?.let { PhotoStore.persist(getApplication(), it) }
+            repository.completeOnboarding(name, birthMonth, avatarEmoji, storedPath, supportLayerEnabled)
+        }
+    }
+
+    fun enterSampleDataMode() {
+        viewModelScope.launch { repository.enterSampleDataMode() }
+    }
+
     fun saveParentMoment(
         title: String,
         caption: String,

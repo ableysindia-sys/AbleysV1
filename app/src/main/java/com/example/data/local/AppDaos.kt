@@ -35,6 +35,9 @@ interface ChildProfileDao {
 
     @Query("UPDATE child_profiles SET name = :name, age = :age WHERE id = :id")
     suspend fun updateNameAndAge(id: String, name: String, age: Int)
+
+    @Query("UPDATE child_profiles SET isOnboarded = 1 WHERE id = :id")
+    suspend fun markOnboarded(id: String)
 }
 
 @Dao
@@ -59,6 +62,9 @@ interface MemoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMemory(memory: MemoryItem): Long
+
+    @Query("DELETE FROM memories")
+    suspend fun deleteAllMemories()
 
     @Query("DELETE FROM memories WHERE id = :id")
     suspend fun deleteMemory(id: Long)

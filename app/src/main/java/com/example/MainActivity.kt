@@ -36,6 +36,7 @@ import com.example.ui.screens.milestones.MilestonesScreen
 import com.example.ui.screens.milestones.MilestonesTrackerSheet
 import com.example.ui.screens.move.ActivityDetailScreen
 import com.example.ui.screens.move.ActivityPlayerDialog
+import com.example.ui.screens.onboarding.OnboardingScreen
 import com.example.ui.screens.move.MoveProgramDetailScreen
 import com.example.ui.screens.move.MoveScreen
 import com.example.ui.screens.story.AddMomentDialog
@@ -131,12 +132,21 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
     val childName = childProfile?.name ?: "Aarav"
     val showSupportTab = childProfile?.supportLayerEnabled ?: true
 
+    // Onboarding and the full-screen details own the whole window; the app chrome would only
+    // compete with them.
+    val chromeVisible = childProfile?.isOnboarded != false &&
+        selectedSkillForDetail == null &&
+        selectedMoveActivity == null &&
+        selectedMoveProgram == null &&
+        selectedTherapyProgram == null &&
+        !milestonesTrackerOpen
+
     Scaffold(
         containerColor = AbleyIvory,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             // Show main top bar only when not inside a full-screen detail or milestones screen
-            if (selectedSkillForDetail == null && selectedMoveActivity == null && selectedTherapyProgram == null && !milestonesTrackerOpen) {
+            if (chromeVisible) {
                 AbleysTopBar(
                     childProfile = childProfile,
                     onOpenProfileSettings = { viewModel.openProfileSettings() },
@@ -147,7 +157,7 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
         },
         bottomBar = {
             // Show bottom navigation on main tabs
-            if (selectedSkillForDetail == null && selectedMoveActivity == null && selectedTherapyProgram == null && !milestonesTrackerOpen) {
+            if (chromeVisible) {
                 AbleysBottomNavigationBar(
                     currentTab = selectedTab,
                     onTabSelected = { viewModel.selectTab(it) },
@@ -164,6 +174,22 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
                 .padding(innerPadding)
         ) {
             when {
+                // First run. The profile row exists from seeding, so the gate is isOnboarded
+                // rather than the row being absent.
+                childProfile?.isOnboarded == false -> {
+                    OnboardingScreen(
+                        onComplete = { result ->
+                            viewModel.completeOnboarding(
+                                name = result.childName,
+                                birthMonth = result.birthMonth,
+                                avatarEmoji = result.avatarEmoji,
+                                photoUri = result.photoUri,
+                                supportLayerEnabled = result.supportLayerEnabled
+                            )
+                        },
+                        onExploreWithSampleData = { viewModel.enterSampleDataMode() }
+                    )
+                }
                 selectedSkillForDetail != null -> {
                     val skillArea = selectedSkillForDetail!!
                     val progress = skillProgressList.firstOrNull { it.skillAreaId == skillArea.id }
