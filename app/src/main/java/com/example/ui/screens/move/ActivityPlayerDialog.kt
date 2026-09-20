@@ -75,6 +75,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 import com.example.play.feedback.AmbientSound
+import com.example.ui.play.BubblePopGame
 
 @Composable
 fun ActivityPlayerDialog(
@@ -248,6 +249,9 @@ fun ActivityPlayerDialog(
                         }
                         PlayMode.SENSORY_TOY -> {
                             LiquidMotionToy()
+                        }
+                        PlayMode.BUBBLE_POP -> {
+                            BubblePopGame()
                         }
                         PlayMode.GUIDED_STEPS -> GuidedStepsTimer(
                             secondsRemaining = secondsRemaining,

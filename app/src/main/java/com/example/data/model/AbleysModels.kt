@@ -102,7 +102,10 @@ enum class PlayMode {
     SQUEEZE,
 
     /** Slow thick liquid with no goal, no timer and nothing to fail. */
-    SENSORY_TOY
+    SENSORY_TOY,
+
+    /** A grid of bubbles that fade when pressed and quietly refill. Also endless. */
+    BUBBLE_POP
 }
 
 /** Shapes the trace game can draw. */

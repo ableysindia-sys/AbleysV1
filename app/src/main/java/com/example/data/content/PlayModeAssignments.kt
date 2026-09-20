@@ -67,6 +67,13 @@ object PlayModeAssignments {
         "linear_rocking_rounds"
     )
 
+    // Repetitive tactile input with no end point. Same family as the liquid toy: press, feel,
+    // repeat, and nothing anywhere that says you are finished.
+    private val bubblePops: Set<String> = setOf(
+        "strat_self_care_menu",
+        "strat_music_attention_anchor"
+    )
+
     /** Applies the assignments above. Anything unlisted is returned untouched. */
     fun apply(activities: List<MoveActivity>): List<MoveActivity> = activities.map { activity ->
         when {
@@ -87,11 +94,13 @@ object PlayModeAssignments {
                 targetSqueezes = squeezes.getValue(activity.id)
             )
             activity.id in sensoryToys -> activity.copy(playMode = PlayMode.SENSORY_TOY)
+            activity.id in bubblePops -> activity.copy(playMode = PlayMode.BUBBLE_POP)
             else -> activity
         }
     }
 
     /** Ids this object expects to find, so a test can catch a rename in the source corpus. */
     val assignedIds: Set<String> =
-        breathing.keys + tracing.keys + steadyHolds.keys + squeezes.keys + sensoryToys
+        breathing.keys + tracing.keys + steadyHolds.keys + squeezes.keys +
+            sensoryToys + bubblePops
 }
