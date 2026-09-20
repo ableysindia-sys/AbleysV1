@@ -135,7 +135,7 @@ fun AbleysBottomNavigationBar(
                 icon = {
                     Icon(
                         imageVector = if (currentTab == NavigationTab.SUPPORT) Icons.Filled.Diversity1 else Icons.Outlined.Diversity1,
-                        contentDescription = "Additional Support",
+                        contentDescription = "Foundational Support",
                         modifier = Modifier.size(24.dp)
                     )
                 },

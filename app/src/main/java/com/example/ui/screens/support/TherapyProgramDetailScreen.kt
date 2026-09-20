@@ -50,6 +50,7 @@ import com.example.ui.theme.AbleyInk
 import com.example.ui.theme.AbleyIvory
 import com.example.ui.theme.AbleySand
 import com.example.ui.theme.AbleyTeal
+import com.example.ui.components.HouseholdAlternativeCard
 
 @Composable
 fun TherapyProgramDetailScreen(
@@ -296,6 +297,14 @@ fun TherapyProgramDetailScreen(
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
+
+                    program.householdAlternative?.let { alternative ->
+                        HouseholdAlternativeCard(
+                            alternative = alternative,
+                            needsInstallation = program.needsInstallation,
+                            modifier = Modifier.padding(bottom = 10.dp)
+                        )
+                    }
 
                     val equipName = program.equipmentName
                     if (equipName != null) {

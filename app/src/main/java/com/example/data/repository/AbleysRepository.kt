@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.data.local.AppDatabase
 import com.example.data.content.AbleysContent
 import com.example.data.content.AchievementCatalogue
+import com.example.data.content.HouseholdAlternatives
 import com.example.data.content.RegulationActivities
 import com.example.data.content.PlayModeAssignments
 import com.example.data.content.StrategyActivities
@@ -361,7 +362,12 @@ class AbleysRepository(context: Context) {
 
     fun activityById(id: String): MoveActivity? = curatedMoveActivities.firstOrNull { it.id == id }
     /** 25 home programmes extracted from the OT corpus, each carrying its source page. */
-    val curatedTherapyPrograms: List<TherapyProgram> = AbleysContent.therapyPrograms
+    val curatedTherapyPrograms: List<TherapyProgram> = AbleysContent.therapyPrograms.map { program ->
+        program.copy(
+            householdAlternative = HouseholdAlternatives.forEquipment(program.equipmentNeeded),
+            needsInstallation = HouseholdAlternatives.needsInstallation(program.equipmentNeeded)
+        )
+    }
     private val scaffoldParentStories: List<ParentStory> = listOf(
         ParentStory(
             id = "story_haircuts",
@@ -502,7 +508,7 @@ class AbleysRepository(context: Context) {
             )
         )
 
-        "Therapy session completed! +$xpGain XP added to Aarav's progress."
+        "Session complete. +$xpGain XP added."
     }
 
     suspend fun completeSkillGame(area: SkillArea, xpReward: Int = 25): String = withContext(Dispatchers.IO) {

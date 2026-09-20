@@ -358,7 +358,7 @@ fun TherapyCountdownTimerOverlay(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "Guided Therapy Loop Complete!",
+                            text = "Session complete",
                             fontFamily = PoppinsFontFamily,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,

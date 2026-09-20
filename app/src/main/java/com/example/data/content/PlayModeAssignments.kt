@@ -74,8 +74,14 @@ object PlayModeAssignments {
         "strat_music_attention_anchor"
     )
 
-    /** Applies the assignments above. Anything unlisted is returned untouched. */
-    fun apply(activities: List<MoveActivity>): List<MoveActivity> = activities.map { activity ->
+    /**
+     * Applies the assignments above, and attaches a household substitution to anything that
+     * names equipment. Anything unlisted keeps its defaults.
+     */
+    fun apply(activities: List<MoveActivity>): List<MoveActivity> = activities.map { raw ->
+        val activity = raw.copy(
+            householdAlternative = HouseholdAlternatives.forEquipment(raw.equipmentName)
+        )
         when {
             breathing.containsKey(activity.id) -> activity.copy(
                 playMode = PlayMode.BREATH_PACER,

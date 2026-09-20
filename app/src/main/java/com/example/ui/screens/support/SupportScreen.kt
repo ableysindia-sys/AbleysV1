@@ -78,6 +78,7 @@ import com.example.ui.theme.AbleyTeal
 import com.example.ui.theme.DmSansFontFamily
 import com.example.ui.theme.PoppinsFontFamily
 import com.example.viewmodel.SupportSubTab
+import com.example.data.content.ParentStoryTopics
 
 @Composable
 fun SupportScreen(
@@ -125,7 +126,7 @@ fun SupportScreen(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Clinical Therapy",
+                    text = "Foundational Support",
                     fontFamily = PoppinsFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -164,7 +165,7 @@ fun SupportScreen(
                         onClick = { onSelectSubTab(SupportSubTab.THERAPY) },
                         text = {
                             Text(
-                                text = "Therapy at Home",
+                                text = "Foundations at Home",
                                 fontFamily = DmSansFontFamily,
                                 fontWeight = if (currentSubTab == SupportSubTab.THERAPY) FontWeight.Bold else FontWeight.Medium,
                                 fontSize = 13.sp
@@ -359,7 +360,7 @@ fun SupportScreen(
                     contentPadding = PaddingValues(vertical = 4.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(listOf("All", "Equipment", "Milestones", "Daily Routines", "Regulation")) { topic ->
+                    items(ParentStoryTopics.filterLabels) { topic ->
                         val isSelected = selectedTopicFilter == topic
                         FilterChip(
                             selected = isSelected,

@@ -159,6 +159,8 @@ data class MoveActivity(
     val sourceRef: String = "",
     val reviewDiscipline: ReviewDiscipline = ReviewDiscipline.OCCUPATIONAL_THERAPY,
     val reviewState: ReviewState = ReviewState.DRAFT,
+    /** What to use instead when the equipment is not in the house. */
+    val householdAlternative: String? = null,
     val playMode: PlayMode = PlayMode.GUIDED_STEPS,
     val breathPattern: BreathPattern? = null,
     val traceShape: TraceShape? = null,
@@ -268,7 +270,11 @@ data class TherapyProgram(
     /** Document and page this was extracted from, shown to the reviewing practitioner. */
     val sourceRef: String = "",
     val reviewDiscipline: ReviewDiscipline = ReviewDiscipline.OCCUPATIONAL_THERAPY,
-    val reviewState: ReviewState = ReviewState.DRAFT
+    val reviewState: ReviewState = ReviewState.DRAFT,
+    /** What to use instead when the equipment is not in the house. */
+    val householdAlternative: String? = null,
+    /** True when the equipment needs drilling or a ceiling fixture. */
+    val needsInstallation: Boolean = false
 ) {
     val durationMinutes: Int
         get() = totalMinutes

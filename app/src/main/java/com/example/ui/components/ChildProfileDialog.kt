@@ -212,7 +212,7 @@ fun ChildProfileDialog(
                                 )
                             )
                             Text(
-                                text = "Therapy at Home & Parent-to-Parent lived experiences for families who need extra guidance.",
+                                text = "Foundations at Home and Parent-to-Parent, for families who want a little more to work with.",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = AbleyInk.copy(alpha = 0.65f),
                                     fontSize = 11.sp

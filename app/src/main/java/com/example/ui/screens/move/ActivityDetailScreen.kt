@@ -52,6 +52,7 @@ import com.example.ui.theme.AbleyTeal
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.VerifiedUser
 import com.example.data.model.ReviewState
+import com.example.ui.components.HouseholdAlternativeCard
 
 @Composable
 fun ActivityDetailScreen(
@@ -358,6 +359,11 @@ fun ActivityDetailScreen(
                                     )
                                 }
                             }
+                        }
+
+                        activity.householdAlternative?.let { alternative ->
+                            Spacer(modifier = Modifier.height(10.dp))
+                            HouseholdAlternativeCard(alternative = alternative)
                         }
                     } else {
                         Surface(
