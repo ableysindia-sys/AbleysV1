@@ -317,8 +317,8 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
         AddMomentDialog(
             childName = childName,
             onDismiss = { viewModel.closeAddMoment() },
-            onSaveMoment = { title, caption, dateStr, emoji ->
-                viewModel.saveParentMoment(title, caption, dateStr, emoji)
+            onSaveMoment = { title, caption, dateStr, emoji, photoUri ->
+                viewModel.saveParentMoment(title, caption, dateStr, emoji, photoUri)
             }
         )
     }

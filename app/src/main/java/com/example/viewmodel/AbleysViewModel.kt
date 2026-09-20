@@ -1,6 +1,8 @@
 package com.example.viewmodel
 
 import android.app.Application
+import android.net.Uri
+import com.example.data.media.PhotoStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.model.Achievement
@@ -285,11 +287,25 @@ class AbleysViewModel(application: Application) : AndroidViewModel(application) 
         _addMomentDialogOpen.value = false
     }
 
-    fun saveParentMoment(title: String, caption: String, dateStr: String, emoji: String) {
+    fun saveParentMoment(
+        title: String,
+        caption: String,
+        dateStr: String,
+        emoji: String,
+        photoUri: Uri? = null
+    ) {
         viewModelScope.launch {
-            repository.addParentMemory(title, caption, dateStr, emoji)
+            // Copy the picked photo into app storage before saving. If the copy fails the memory
+            // is still saved without it -- losing the photo is bad, losing what the parent wrote
+            // is worse.
+            val storedPath = photoUri?.let { PhotoStore.persist(getApplication(), it) }
+            repository.addParentMemory(title, caption, dateStr, emoji, storedPath)
             _addMomentDialogOpen.value = false
-            _feedbackToast.value = "Memory saved to My Story timeline"
+            _feedbackToast.value = if (photoUri != null && storedPath == null) {
+                "Memory saved, but that photo could not be added"
+            } else {
+                "Memory saved to My Story timeline"
+            }
         }
     }
 

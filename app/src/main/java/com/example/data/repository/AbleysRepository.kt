@@ -482,17 +482,34 @@ class AbleysRepository(context: Context) {
         "Game Complete! +$xpReward XP earned for ${area.displayName}."
     }
 
-    suspend fun addParentMemory(title: String, caption: String, dateString: String, emoji: String = "✨") = withContext(Dispatchers.IO) {
-        Analytics.track(Analytics.MEMORY_CAPTURED, mapOf("source" to "parent"))
+    suspend fun addParentMemory(
+        title: String,
+        caption: String,
+        dateString: String,
+        emoji: String = "✨",
+        photoUri: String? = null
+    ) = withContext(Dispatchers.IO) {
+        Analytics.track(
+            Analytics.MEMORY_CAPTURED,
+            mapOf("source" to "parent", "has_photo" to (photoUri != null))
+        )
+        // The dialog passes "Today" for a moment being captured now; resolve it to a real date so
+        // the timeline still reads correctly tomorrow.
+        val resolvedDate = if (dateString.equals("Today", ignoreCase = true)) {
+            SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date())
+        } else {
+            dateString
+        }
         memoryDao.insertMemory(
             MemoryItem(
                 title = title,
                 caption = caption,
-                dateString = dateString,
+                dateString = resolvedDate,
                 source = MemorySource.PARENT,
-                badgeTag = "Parent photo",
+                badgeTag = if (photoUri != null) "Parent photo" else "Parent moment",
                 highlightColorHex = 0xFFEE4A41,
-                iconEmoji = emoji
+                iconEmoji = emoji,
+                photoUri = photoUri
             )
         )
     }

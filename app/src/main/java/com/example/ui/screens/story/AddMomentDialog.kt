@@ -41,18 +41,34 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.ui.theme.AbleyCoral
 import com.example.ui.theme.AbleyInk
 import com.example.ui.theme.AbleyIvory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.example.ui.theme.AbleySand
 
 @Composable
 fun AddMomentDialog(
     childName: String,
     onDismiss: () -> Unit,
-    onSaveMoment: (title: String, caption: String, dateStr: String, emoji: String) -> Unit,
+    onSaveMoment: (title: String, caption: String, dateStr: String, emoji: String, photoUri: Uri?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var title by remember { mutableStateOf("") }
     var caption by remember { mutableStateOf("") }
     var selectedEmoji by remember { mutableStateOf("📸") }
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // The photo picker needs no storage permission on any supported Android version, so a parent
+    // is never asked to hand over their whole gallery to save one moment.
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> if (uri != null) photoUri = uri }
 
     val emojis = listOf("📸", "🚲", "🎨", "👟", "🏖️", "📖", "🎈", "🌟")
 
@@ -127,6 +143,18 @@ fun AddMomentDialog(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
+                PhotoPickerField(
+                    photoUri = photoUri,
+                    onPick = {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onClear = { photoUri = null }
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
@@ -155,7 +183,7 @@ fun AddMomentDialog(
                 Button(
                     onClick = {
                         if (title.isNotBlank()) {
-                            onSaveMoment(title.trim(), caption.trim(), "Today", selectedEmoji)
+                            onSaveMoment(title.trim(), caption.trim(), "Today", selectedEmoji, photoUri)
                         }
                     },
                     enabled = title.isNotBlank(),
@@ -172,6 +200,79 @@ fun AddMomentDialog(
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Photo slot for a new moment. Empty state is a tap target rather than a decorative box, because
+ * the photo is the point of the memory -- a timeline of captions is a diary, not a story.
+ */
+@Composable
+private fun PhotoPickerField(
+    photoUri: Uri?,
+    onPick: () -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(168.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(AbleySand.copy(alpha = 0.45f))
+            .border(1.dp, AbleySand, RoundedCornerShape(18.dp))
+            .clickable(enabled = photoUri == null) { onPick() }
+            .testTag("moment_photo_picker"),
+        contentAlignment = Alignment.Center
+    ) {
+        if (photoUri == null) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Filled.AddAPhoto,
+                    contentDescription = null,
+                    tint = AbleyCoral,
+                    modifier = Modifier.size(30.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Add a photo",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Optional, but this is what makes it a memory",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Black.copy(alpha = 0.55f)
+                )
+            }
+        } else {
+            AsyncImage(
+                model = photoUri,
+                contentDescription = "Selected photo for this moment",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(168.dp)
+                    .testTag("moment_photo_preview")
+            )
+            IconButton(
+                onClick = onClear,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .size(32.dp)
+                    .testTag("moment_photo_clear")
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Remove photo",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }

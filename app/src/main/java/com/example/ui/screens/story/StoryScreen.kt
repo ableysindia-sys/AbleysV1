@@ -67,6 +67,8 @@ import com.example.ui.theme.AbleySand
 import com.example.ui.theme.AbleyTeal
 import com.example.ui.theme.DmSansFontFamily
 import com.example.ui.theme.PoppinsFontFamily
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 /**
  * Story Tab: The Emotional Retention Engine
@@ -621,8 +623,19 @@ fun PhotoMemoryFeedCard(
                     .testTag("photo_placeholder_${memory.id}"),
                 contentAlignment = Alignment.Center
             ) {
-                // Background artistic childhood photo placeholder composition
-                Column(
+                val storedPhoto = memory.photoUri
+                if (storedPhoto != null) {
+                    AsyncImage(
+                        model = storedPhoto,
+                        contentDescription = memory.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("memory_photo_${memory.id}")
+                    )
+                }
+                // Shown when the memory has no photo of its own, and behind nothing when it does.
+                if (storedPhoto == null) Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier.padding(16.dp)
