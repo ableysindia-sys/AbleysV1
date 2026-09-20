@@ -85,6 +85,11 @@ private val AVATARS = listOf("🦁", "🐢", "🦊", "🐛", "🐙", "🦋", "�
 fun OnboardingScreen(
     onComplete: (OnboardingResult) -> Unit,
     onExploreWithSampleData: () -> Unit,
+    // Reused when a parent adds a second child, where "sample data" is not what the escape hatch
+    // does and saying so would be a lie in a two-word button.
+    secondaryLabel: String = "Look around with sample data first",
+    headline: String = "Who are we growing with?",
+    primaryLabel: String = "Start growing together",
     modifier: Modifier = Modifier
 ) {
     var name by remember { mutableStateOf("") }
@@ -114,7 +119,7 @@ fun OnboardingScreen(
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "Who are we growing with?",
+            text = headline,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             color = AbleyInk
         )
@@ -282,7 +287,7 @@ fun OnboardingScreen(
                 .testTag("onboarding_start")
         ) {
             Text(
-                text = "Start growing together",
+                text = primaryLabel,
                 color = Color.White,
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
             )
@@ -297,7 +302,7 @@ fun OnboardingScreen(
             modifier = Modifier.fillMaxWidth().testTag("onboarding_sample_data")
         ) {
             Text(
-                text = "Look around with sample data first",
+                text = secondaryLabel,
                 color = AbleyInk.copy(alpha = 0.55f),
                 style = MaterialTheme.typography.bodySmall
             )

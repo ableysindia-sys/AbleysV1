@@ -79,6 +79,8 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
 
     val selectedMoveActivity by viewModel.selectedMoveActivity.collectAsStateWithLifecycle()
     val selectedMoveProgram by viewModel.selectedMoveProgram.collectAsStateWithLifecycle()
+    val allChildren by viewModel.allChildren.collectAsStateWithLifecycle()
+    val addingChild by viewModel.addingChild.collectAsStateWithLifecycle()
     val moveProgramProgress by viewModel.moveProgramProgress.collectAsStateWithLifecycle()
     val activeMovePlayerActivity by viewModel.activeMovePlayerActivity.collectAsStateWithLifecycle()
 
@@ -135,6 +137,7 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
     // Onboarding and the full-screen details own the whole window; the app chrome would only
     // compete with them.
     val chromeVisible = childProfile?.isOnboarded != false &&
+        !addingChild &&
         selectedSkillForDetail == null &&
         selectedMoveActivity == null &&
         selectedMoveProgram == null &&
@@ -149,6 +152,9 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
             if (chromeVisible) {
                 AbleysTopBar(
                     childProfile = childProfile,
+                    children = allChildren,
+                    onSwitchChild = { viewModel.switchChild(it) },
+                    onAddChild = { viewModel.startAddChild() },
                     onOpenProfileSettings = { viewModel.openProfileSettings() },
                     onOpenYearInGrowing = { viewModel.openYearInGrowing() },
                     onOpenAchievements = { viewModel.openAchievementsModal() }
@@ -176,6 +182,23 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
             when {
                 // First run. The profile row exists from seeding, so the gate is isOnboarded
                 // rather than the row being absent.
+                addingChild -> {
+                    OnboardingScreen(
+                        onComplete = { result ->
+                            viewModel.addChild(
+                                name = result.childName,
+                                birthMonth = result.birthMonth,
+                                avatarEmoji = result.avatarEmoji,
+                                photoUri = result.photoUri,
+                                supportLayerEnabled = result.supportLayerEnabled
+                            )
+                        },
+                        onExploreWithSampleData = { viewModel.cancelAddChild() },
+                        secondaryLabel = "Cancel",
+                        headline = "Who else are we growing with?",
+                        primaryLabel = "Add this child"
+                    )
+                }
                 childProfile?.isOnboarded == false -> {
                     OnboardingScreen(
                         onComplete = { result ->

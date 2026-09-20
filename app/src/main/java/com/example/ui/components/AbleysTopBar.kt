@@ -38,6 +38,14 @@ import com.example.ui.theme.AbleyCoral
 import com.example.ui.theme.AbleyInk
 import com.example.ui.theme.AbleyIvory
 import com.example.ui.theme.AbleySand
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun AbleysTopBar(
@@ -45,9 +53,13 @@ fun AbleysTopBar(
     onOpenProfileSettings: () -> Unit,
     onOpenYearInGrowing: () -> Unit,
     onOpenAchievements: () -> Unit,
+    children: List<ChildProfile> = emptyList(),
+    onSwitchChild: (String) -> Unit = {},
+    onAddChild: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val childName = childProfile?.name ?: "Aarav"
+    var switcherOpen by remember { mutableStateOf(false) }
 
     Surface(
         color = AbleyIvory,
@@ -72,13 +84,68 @@ fun AbleysTopBar(
                         fontSize = 24.sp
                     )
                 )
-                Text(
-                    text = "Good morning, $childName",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = AbleyInk.copy(alpha = 0.7f),
-                        fontWeight = FontWeight.Medium
-                    )
-                )
+                // The greeting doubles as the child switcher. The spec puts the child's name on
+                // every screen, so the name is already where a parent looks to answer "whose
+                // progress am I seeing" -- making it the control costs no chrome.
+                Box {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = children.isNotEmpty()) { switcherOpen = true }
+                            .testTag("child_switcher")
+                    ) {
+                        Text(
+                            text = "Good morning, $childName",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = AbleyInk.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                        if (children.size > 1) {
+                            Icon(
+                                imageVector = Icons.Default.ExpandMore,
+                                contentDescription = "Switch child",
+                                tint = AbleyInk.copy(alpha = 0.5f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = switcherOpen,
+                        onDismissRequest = { switcherOpen = false }
+                    ) {
+                        children.forEach { child ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = "${child.avatarEmoji}  ${child.name}",
+                                        fontWeight = if (child.id == childProfile?.id) {
+                                            FontWeight.Bold
+                                        } else {
+                                            FontWeight.Normal
+                                        }
+                                    )
+                                },
+                                onClick = {
+                                    switcherOpen = false
+                                    if (child.id != childProfile?.id) onSwitchChild(child.id)
+                                },
+                                modifier = Modifier.testTag("switch_to_${child.id}")
+                            )
+                        }
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text("Add a child") },
+                            onClick = {
+                                switcherOpen = false
+                                onAddChild()
+                            },
+                            modifier = Modifier.testTag("add_child_menu_item")
+                        )
+                    }
+                }
             }
 
             Row(

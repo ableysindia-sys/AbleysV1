@@ -38,33 +38,54 @@ interface ChildProfileDao {
 
     @Query("UPDATE child_profiles SET isOnboarded = 1 WHERE id = :id")
     suspend fun markOnboarded(id: String)
+
+    @Query("SELECT * FROM child_profiles ORDER BY name")
+    fun getAllProfilesFlow(): Flow<List<ChildProfile>>
+
+    @Query("SELECT * FROM child_profiles WHERE isActive = 1 LIMIT 1")
+    fun getActiveProfileFlow(): Flow<ChildProfile?>
+
+    @Query("SELECT * FROM child_profiles WHERE isActive = 1 LIMIT 1")
+    suspend fun getActiveProfile(): ChildProfile?
+
+    @Query("UPDATE child_profiles SET isActive = 0")
+    suspend fun clearActive()
+
+    @Query("UPDATE child_profiles SET isActive = 1 WHERE id = :id")
+    suspend fun setActive(id: String)
+
+    @Query("SELECT COUNT(*) FROM child_profiles")
+    suspend fun profileCount(): Int
 }
 
 @Dao
 interface SkillDao {
-    @Query("SELECT * FROM skill_progress")
-    fun getAllSkillProgressFlow(): Flow<List<SkillProgress>>
+    @Query("SELECT * FROM skill_progress WHERE childId = :childId")
+    fun getAllSkillProgressFlow(childId: String): Flow<List<SkillProgress>>
+
+    @Query("SELECT COUNT(*) FROM skill_progress WHERE childId = :childId")
+    suspend fun countForChild(childId: String): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(skills: List<SkillProgress>)
 
-    @Query("SELECT * FROM skill_progress WHERE skillAreaId = :areaId LIMIT 1")
-    suspend fun getSkillProgress(areaId: String): SkillProgress?
+    @Query("SELECT * FROM skill_progress WHERE childId = :childId AND skillAreaId = :areaId LIMIT 1")
+    suspend fun getSkillProgress(childId: String, areaId: String): SkillProgress?
 
-    @Query("UPDATE skill_progress SET currentLevel = currentLevel + 1, xpEarned = xpEarned + :xpGain, gamesCompleted = gamesCompleted + 1 WHERE skillAreaId = :areaId")
-    suspend fun levelUpSkill(areaId: String, xpGain: Int)
+    @Query("UPDATE skill_progress SET currentLevel = currentLevel + 1, xpEarned = xpEarned + :xpGain, gamesCompleted = gamesCompleted + 1 WHERE childId = :childId AND skillAreaId = :areaId")
+    suspend fun levelUpSkill(childId: String, areaId: String, xpGain: Int)
 }
 
 @Dao
 interface MemoryDao {
-    @Query("SELECT * FROM memories ORDER BY timestamp DESC")
-    fun getAllMemoriesFlow(): Flow<List<MemoryItem>>
+    @Query("SELECT * FROM memories WHERE childId = :childId ORDER BY timestamp DESC")
+    fun getAllMemoriesFlow(childId: String): Flow<List<MemoryItem>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMemory(memory: MemoryItem): Long
 
-    @Query("DELETE FROM memories")
-    suspend fun deleteAllMemories()
+    @Query("DELETE FROM memories WHERE childId = :childId")
+    suspend fun deleteAllMemories(childId: String)
 
     @Query("DELETE FROM memories WHERE id = :id")
     suspend fun deleteMemory(id: Long)
@@ -72,8 +93,11 @@ interface MemoryDao {
 
 @Dao
 interface AchievementDao {
-    @Query("SELECT * FROM achievements")
-    fun getAllAchievementsFlow(): Flow<List<Achievement>>
+    @Query("SELECT * FROM achievements WHERE childId = :childId")
+    fun getAllAchievementsFlow(childId: String): Flow<List<Achievement>>
+
+    @Query("SELECT COUNT(*) FROM achievements WHERE childId = :childId")
+    suspend fun countForChild(childId: String): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(achievements: List<Achievement>)
@@ -81,8 +105,8 @@ interface AchievementDao {
     @Update
     suspend fun updateAchievement(achievement: Achievement)
 
-    @Query("UPDATE achievements SET isUnlocked = 1, unlockedDate = :dateStr WHERE code = :code")
-    suspend fun unlockAchievement(code: String, dateStr: String)
+    @Query("UPDATE achievements SET isUnlocked = 1, unlockedDate = :dateStr WHERE childId = :childId AND code = :code")
+    suspend fun unlockAchievement(childId: String, code: String, dateStr: String)
 }
 
 @Dao

@@ -12,6 +12,8 @@ data class ChildProfile(
     val avatarEmoji: String = "🦁",
     val photoUri: String? = null,
     val supportLayerEnabled: Boolean = true,
+    /** Exactly one profile is active at a time; the switcher moves this flag. */
+    val isActive: Boolean = true,
     // False until a parent has completed onboarding for this child. The seeded demo child is the
     // only profile that starts with figures already on it; a real child starts at zero.
     val isOnboarded: Boolean = false,
@@ -40,13 +42,14 @@ enum class SkillArea(
     PLAYING_WITH_OTHERS("playing_with_others", "Playing With Others", "Turn-taking, shared play and joining in", "chat", "need:social-play")
 }
 
-@Entity(tableName = "skill_progress")
+@Entity(tableName = "skill_progress", primaryKeys = ["childId", "skillAreaId"])
 data class SkillProgress(
-    @PrimaryKey val skillAreaId: String,
+    val skillAreaId: String,
     val currentLevel: Int = 1,
     val xpEarned: Int = 0,
     val gamesCompleted: Int = 0,
-    val mastered: Boolean = false
+    val mastered: Boolean = false,
+    val childId: String = "child_default"
 )
 
 enum class MoveFormat(val displayName: String, val badgeColorHex: Long) {
@@ -210,16 +213,17 @@ data class ParentStory(
     val isPlaceholder: Boolean = false
 )
 
-@Entity(tableName = "achievements")
+@Entity(tableName = "achievements", primaryKeys = ["childId", "code"])
 data class Achievement(
-    @PrimaryKey val code: String,
+    val code: String,
     val title: String,
     val description: String,
     val badgeSymbol: String, // "7", "30", "100", "365", "⭐", "500", "1Y", etc.
     val isUnlocked: Boolean = false,
     val progress: Int = 0,
     val maxProgress: Int = 100,
-    val unlockedDate: String? = null
+    val unlockedDate: String? = null,
+    val childId: String = "child_default"
 )
 
 @Entity(tableName = "equipment_items")

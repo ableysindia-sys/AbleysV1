@@ -24,7 +24,7 @@ import com.example.data.model.SkillProgress
         ChildDevelopmentMilestone::class,
         MoveProgramDayProgress::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(MilestoneConverters::class)

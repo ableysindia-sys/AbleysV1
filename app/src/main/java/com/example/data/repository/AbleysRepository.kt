@@ -3,6 +3,7 @@ package com.example.data.repository
 import android.content.Context
 import com.example.data.local.AppDatabase
 import com.example.data.content.AbleysContent
+import com.example.data.content.AchievementCatalogue
 import com.example.data.model.Achievement
 import com.example.data.model.ChildDevelopmentMilestone
 import com.example.data.model.ChildProfile
@@ -23,7 +24,11 @@ import com.example.data.model.TherapyProgram
 import com.example.data.model.TherapySessionStep
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import com.example.analytics.Analytics
@@ -32,7 +37,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AbleysRepository(context: Context) {
+
+    companion object {
+        const val DEFAULT_CHILD_ID = "child_default"
+    }
+
     private val db = AppDatabase.getDatabase(context)
     private val childDao = db.childProfileDao()
     private val skillDao = db.skillDao()
@@ -42,12 +53,37 @@ class AbleysRepository(context: Context) {
     private val milestoneDao = db.milestoneDao()
     private val moveProgramDao = db.moveProgramDao()
 
-    val childProfileFlow: Flow<ChildProfile?> = childDao.getProfileFlow()
-    val skillProgressFlow: Flow<List<SkillProgress>> = skillDao.getAllSkillProgressFlow()
-    val memoriesFlow: Flow<List<MemoryItem>> = memoryDao.getAllMemoriesFlow()
-    val achievementsFlow: Flow<List<Achievement>> = achievementDao.getAllAchievementsFlow()
+    /** Every child on this device, for the switcher. */
+    val allChildrenFlow: Flow<List<ChildProfile>> = childDao.getAllProfilesFlow()
+
+    val childProfileFlow: Flow<ChildProfile?> = childDao.getActiveProfileFlow()
+
+    /**
+     * The active child's id, re-emitted when the parent switches.
+     *
+     * Everything below hangs off this rather than a constant, so switching child swaps the whole
+     * app's data in one step. A screen that kept reading "child_default" after a switch would
+     * show one child's progress under another child's name, which is the one failure a family
+     * would never forgive.
+     */
+    private val activeChildIdFlow: Flow<String> = childProfileFlow
+        .map { it?.id ?: DEFAULT_CHILD_ID }
+        .distinctUntilChanged()
+
+    val skillProgressFlow: Flow<List<SkillProgress>> =
+        activeChildIdFlow.flatMapLatest { skillDao.getAllSkillProgressFlow(it) }
+    val memoriesFlow: Flow<List<MemoryItem>> =
+        activeChildIdFlow.flatMapLatest { memoryDao.getAllMemoriesFlow(it) }
+    val achievementsFlow: Flow<List<Achievement>> =
+        activeChildIdFlow.flatMapLatest { achievementDao.getAllAchievementsFlow(it) }
+    val milestonesFlow: Flow<List<ChildDevelopmentMilestone>> =
+        activeChildIdFlow.flatMapLatest { milestoneDao.getMilestonesForChildFlow(it) }
+
+    /** The catalogue is shared: a product is owned by the household, not by one child. */
     val equipmentFlow: Flow<List<EquipmentProduct>> = equipmentDao.getAllEquipmentFlow()
-    val milestonesFlow: Flow<List<ChildDevelopmentMilestone>> = milestoneDao.getAllMilestonesFlow()
+
+    private suspend fun activeChildId(): String =
+        childDao.getActiveProfile()?.id ?: DEFAULT_CHILD_ID
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -56,7 +92,7 @@ class AbleysRepository(context: Context) {
     }
 
     private suspend fun seedInitialDataIfNeeded() {
-        val existingProfile = childDao.getProfile()
+        val existingProfile = childDao.getActiveProfile() ?: childDao.getProfile()
         if (existingProfile == null) {
             // Seed Child profile matching Page 1 & 8 of spec: Aarav, 1,240 XP, Level 7
             childDao.insertOrUpdateProfile(
@@ -313,7 +349,8 @@ class AbleysRepository(context: Context) {
     /** Multi-day challenges composed over the activity catalogue. */
     val curatedMovePrograms: List<MoveProgram> = AbleysContent.movePrograms
 
-    val moveProgramProgressFlow: Flow<List<MoveProgramDayProgress>> = moveProgramDao.observeProgress()
+    val moveProgramProgressFlow: Flow<List<MoveProgramDayProgress>> =
+        activeChildIdFlow.flatMapLatest { moveProgramDao.observeProgress(it) }
 
     fun activityById(id: String): MoveActivity? = curatedMoveActivities.firstOrNull { it.id == id }
     /** 25 home programmes extracted from the OT corpus, each carrying its source page. */
@@ -406,8 +443,8 @@ class AbleysRepository(context: Context) {
             "target_area" to activity.targetArea,
             "duration_minutes" to activity.durationMinutes
         ))
-        childDao.addXp("child_default", activity.xpReward)
-        childDao.addMinutesMoved("child_default", activity.durationMinutes)
+        childDao.addXp(activeChildId(), activity.xpReward)
+        childDao.addMinutesMoved(activeChildId(), activity.durationMinutes)
 
         val currentDateStr = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date())
 
@@ -425,9 +462,9 @@ class AbleysRepository(context: Context) {
         )
 
         // Check if movement 500 milestone achieved
-        val profile = childDao.getProfile()
+        val profile = childDao.getActiveProfile()
         if (profile != null && profile.minutesMoved >= 500) {
-            achievementDao.unlockAchievement("movement_500", "Earned today")
+            achievementDao.unlockAchievement(activeChildId(), "movement_500", "Earned today")
         }
 
         "Completed ${activity.title}! +${activity.xpReward} XP earned."
@@ -441,8 +478,8 @@ class AbleysRepository(context: Context) {
             "equipment_sku" to program.equipmentSku
         ))
         val xpGain = 45
-        childDao.addXp("child_default", xpGain)
-        childDao.addMinutesMoved("child_default", program.totalMinutes)
+        childDao.addXp(activeChildId(), xpGain)
+        childDao.addMinutesMoved(activeChildId(), program.totalMinutes)
 
         val currentDateStr = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date())
 
@@ -466,10 +503,10 @@ class AbleysRepository(context: Context) {
             "area" to area.id,
             "store_tag" to area.storeTag
         ))
-        skillDao.levelUpSkill(area.id, xpReward)
-        childDao.addXp("child_default", xpReward)
+        skillDao.levelUpSkill(activeChildId(), area.id, xpReward)
+        childDao.addXp(activeChildId(), xpReward)
 
-        val progress = skillDao.getSkillProgress(area.id)
+        val progress = skillDao.getSkillProgress(activeChildId(), area.id)
         val newLevel = progress?.currentLevel ?: 1
 
         val currentDateStr = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date())
@@ -519,7 +556,8 @@ class AbleysRepository(context: Context) {
                 badgeTag = if (photoUri != null) "Parent photo" else "Parent moment",
                 highlightColorHex = 0xFFEE4A41,
                 iconEmoji = emoji,
-                photoUri = photoUri
+                photoUri = photoUri,
+                childId = activeChildId()
             )
         )
     }
@@ -530,12 +568,16 @@ class AbleysRepository(context: Context) {
             mapOf("program_id" to programId, "day" to dayNumber)
         )
         moveProgramDao.markDayComplete(
-            MoveProgramDayProgress(programId = programId, dayNumber = dayNumber)
+            MoveProgramDayProgress(
+                childId = activeChildId(),
+                programId = programId,
+                dayNumber = dayNumber
+            )
         )
     }
 
     suspend fun resetProgram(programId: String) = withContext(Dispatchers.IO) {
-        moveProgramDao.resetProgram("child_default", programId)
+        moveProgramDao.resetProgram(activeChildId(), programId)
     }
 
     /**
@@ -552,7 +594,7 @@ class AbleysRepository(context: Context) {
         photoUri: String?,
         supportLayerEnabled: Boolean
     ) = withContext(Dispatchers.IO) {
-        val existing = childDao.getProfile() ?: ChildProfile()
+        val existing = childDao.getActiveProfile() ?: ChildProfile()
         childDao.insertOrUpdateProfile(
             existing.copy(
                 name = name.ifBlank { existing.name },
@@ -569,14 +611,73 @@ class AbleysRepository(context: Context) {
             )
         )
         // Sample memories belong to the demo profile, not to this family's story.
-        memoryDao.deleteAllMemories()
+        memoryDao.deleteAllMemories(activeChildId())
         Analytics.track(Analytics.ONBOARDING_COMPLETED, mapOf("support_layer" to supportLayerEnabled))
     }
 
     /** Keeps the seeded sample figures and skips first run. For demos, never the default. */
     suspend fun enterSampleDataMode() = withContext(Dispatchers.IO) {
-        childDao.markOnboarded("child_default")
+        childDao.markOnboarded(activeChildId())
         Analytics.track(Analytics.ONBOARDING_COMPLETED, mapOf("mode" to "sample_data"))
+    }
+
+    /**
+     * Adds a child and makes them active.
+     *
+     * A new child gets their own blank skill rows and their own locked achievement set. Sharing
+     * either across siblings would mean one child's badge appearing on the other's profile, which
+     * in a family app is not a rounding error.
+     */
+    suspend fun addChild(
+        name: String,
+        birthMonth: String,
+        avatarEmoji: String,
+        photoUri: String?,
+        supportLayerEnabled: Boolean
+    ): String = withContext(Dispatchers.IO) {
+        val id = "child_" + System.currentTimeMillis().toString(36)
+        childDao.clearActive()
+        childDao.insertOrUpdateProfile(
+            ChildProfile(
+                id = id,
+                name = name.ifBlank { "My child" },
+                birthMonth = birthMonth,
+                avatarEmoji = avatarEmoji,
+                photoUri = photoUri,
+                supportLayerEnabled = supportLayerEnabled,
+                isActive = true,
+                isOnboarded = true,
+                totalXp = 0,
+                level = 1,
+                currentStreak = 0,
+                minutesMoved = 0,
+                activeDays = 0
+            )
+        )
+        seedChildScopedRows(id)
+        Analytics.track(Analytics.CHILD_ADDED)
+        id
+    }
+
+    suspend fun switchChild(childId: String) = withContext(Dispatchers.IO) {
+        childDao.clearActive()
+        childDao.setActive(childId)
+        seedChildScopedRows(childId)
+        Analytics.track(Analytics.CHILD_SWITCHED)
+    }
+
+    /** Gives a child the seven blank skill rows and the locked achievement set, once. */
+    private suspend fun seedChildScopedRows(childId: String) {
+        if (skillDao.countForChild(childId) == 0) {
+            skillDao.insertAll(
+                SkillArea.entries.map { area -> SkillProgress(skillAreaId = area.id, childId = childId) }
+            )
+        }
+        if (achievementDao.countForChild(childId) == 0) {
+            achievementDao.insertAll(
+                AchievementCatalogue.locked.map { it.copy(childId = childId) }
+            )
+        }
     }
 
     suspend fun toggleEquipmentOwned(sku: String, owned: Boolean) = withContext(Dispatchers.IO) {
@@ -584,11 +685,11 @@ class AbleysRepository(context: Context) {
     }
 
     suspend fun updateChildNameAndAge(name: String, age: Int) = withContext(Dispatchers.IO) {
-        childDao.updateNameAndAge("child_default", name, age)
+        childDao.updateNameAndAge(activeChildId(), name, age)
     }
 
     suspend fun toggleSupportLayer(enabled: Boolean) = withContext(Dispatchers.IO) {
-        childDao.setSupportLayerEnabled("child_default", enabled)
+        childDao.setSupportLayerEnabled(activeChildId(), enabled)
     }
 
     // Milestone Operations

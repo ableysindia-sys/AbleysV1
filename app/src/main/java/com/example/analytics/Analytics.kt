@@ -48,6 +48,8 @@ object Analytics {
     // Threshold signals, named to match the validation plan.
     const val MEMORY_CAPTURED = "memory_captured"
     const val ONBOARDING_COMPLETED = "onboarding_completed"
+    const val CHILD_ADDED = "child_added"
+    const val CHILD_SWITCHED = "child_switched"
     const val MOVE_ACTIVITY_COMPLETED = "move_activity_completed"
     const val PROGRAM_DAY_COMPLETED = "program_day_completed"
     const val SHOP_TAP = "shop_tap"

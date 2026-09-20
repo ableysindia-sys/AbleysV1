@@ -310,6 +310,35 @@ class AbleysViewModel(application: Application) : AndroidViewModel(application) 
         _addMomentDialogOpen.value = false
     }
 
+    val allChildren: StateFlow<List<ChildProfile>> = repository.allChildrenFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _addingChild = MutableStateFlow(false)
+    val addingChild: StateFlow<Boolean> = _addingChild.asStateFlow()
+
+    fun startAddChild() { _addingChild.value = true }
+
+    fun cancelAddChild() { _addingChild.value = false }
+
+    fun switchChild(childId: String) {
+        viewModelScope.launch { repository.switchChild(childId) }
+    }
+
+    fun addChild(
+        name: String,
+        birthMonth: String,
+        avatarEmoji: String,
+        photoUri: Uri?,
+        supportLayerEnabled: Boolean
+    ) {
+        viewModelScope.launch {
+            val storedPath = photoUri?.let { PhotoStore.persist(getApplication(), it) }
+            repository.addChild(name, birthMonth, avatarEmoji, storedPath, supportLayerEnabled)
+            _addingChild.value = false
+            _feedbackToast.value = "$name added"
+        }
+    }
+
     fun completeOnboarding(
         name: String,
         birthMonth: String,
