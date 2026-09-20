@@ -128,7 +128,8 @@ fun StoryScreen(
                 .fillMaxSize()
                 .background(AbleyIvory)
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 20.dp)
+                .testTag("story_feed"),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header Block

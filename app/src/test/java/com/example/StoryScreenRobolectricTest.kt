@@ -20,6 +20,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -89,7 +91,10 @@ class StoryScreenRobolectricTest {
         composeTestRule.onNodeWithTag("photo_placeholder_101").performClick()
         composeTestRule.onNodeWithTag("photo_placeholder_101").assertIsDisplayed()
 
-        // Test Share Action on Photo Memory
+        // Test Share Action on Photo Memory. Scroll to it first: enlarging the photo above pushes
+        // this control down, and the feed is a lazy list, so "visible" is not a given.
+        composeTestRule.onNodeWithTag("story_feed")
+            .performScrollToNode(hasTestTag("share_memory_101"))
         composeTestRule.onNodeWithTag("share_memory_101").performClick()
         assertNotNull(sharedCard)
         assertEquals("CHILDHOOD MEMORY", sharedCard?.title)

@@ -456,7 +456,11 @@ fun SkillMapRowCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    // Weighted so a long area name wraps inside the card instead of pushing the
+                    // level chip off the edge. The needs-based names are far longer than the
+                    // single words this row was laid out for.
+                    modifier = Modifier.weight(1f)
                 ) {
                     // Pillar Index Tag (e.g. "01", "02")
                     Surface(
@@ -478,8 +482,11 @@ fun SkillMapRowCard(
                         text = skillArea.displayName,
                         fontFamily = PoppinsFontFamily,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = AbleyInk
+                        fontSize = 18.sp,
+                        lineHeight = 22.sp,
+                        maxLines = 2,
+                        color = AbleyInk,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
 

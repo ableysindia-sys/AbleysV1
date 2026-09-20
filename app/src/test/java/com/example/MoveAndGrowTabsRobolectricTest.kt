@@ -141,7 +141,7 @@ class MoveAndGrowTabsRobolectricTest {
 
     @Test
     fun testSkillMapRowCard_renders7PillarsAndProgression() {
-        val pillar = SkillArea.COMMUNICATION
+        val pillar = SkillArea.PLAYING_WITH_OTHERS
         val metadata = getSkillPillarMetadata(pillar)
 
         var practiceClicked = false
@@ -162,17 +162,17 @@ class MoveAndGrowTabsRobolectricTest {
         }
 
         // Verify title & level
-        composeTestRule.onNodeWithText("Communication").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Playing With Others").assertIsDisplayed()
         composeTestRule.onNodeWithText("Level 4").assertIsDisplayed()
         composeTestRule.onNodeWithText("280 / 350 XP").assertIsDisplayed()
         composeTestRule.onNodeWithText("MILESTONES").assertIsDisplayed()
 
         // Verify practice action
-        composeTestRule.onNodeWithTag("practice_skill_communication").performClick()
+        composeTestRule.onNodeWithTag("practice_skill_playing_with_others").performClick()
         assertTrue(practiceClicked)
 
         // Verify row click
-        composeTestRule.onNodeWithTag("skill_row_communication").performClick()
+        composeTestRule.onNodeWithTag("skill_row_playing_with_others").performClick()
         assertTrue(rowClicked)
     }
 
