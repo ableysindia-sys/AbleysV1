@@ -70,6 +70,10 @@ import com.example.ui.theme.DmSansFontFamily
 import com.example.ui.theme.PoppinsFontFamily
 import com.example.data.model.MoveProgram
 import com.example.data.model.SkillArea
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import com.example.data.model.SpaceNeeded
 
 @Composable
 fun MoveScreen(
@@ -87,13 +91,17 @@ fun MoveScreen(
     val childName = childProfile?.name ?: "Aarav"
     var selectedFormatFilter by remember { mutableStateOf("All") }
     var selectedAreaFilter by remember { mutableStateOf<SkillArea?>(null) }
+    // Smog days in the north and the monsoon everywhere else close outdoor play for weeks. On
+    // those days the only question is what can be done in a flat.
+    var indoorOnly by remember { mutableStateOf(false) }
 
     // One Week and One Month were dropped from this row: those formats belong to the programmes
     // rail above, so as activity filters they could only ever return nothing.
     val formatFilters = listOf("All", "Quick Bursts", "Daily Rituals", "Indoor Agility")
 
-    val filteredActivities = remember(selectedFormatFilter, selectedAreaFilter, activities) {
+    val filteredActivities = remember(selectedFormatFilter, selectedAreaFilter, indoorOnly, activities) {
         activities
+            .filter { !indoorOnly || it.spaceNeeded != SpaceNeeded.OPEN_SPACE }
             .filter { activity ->
                 val area = selectedAreaFilter ?: return@filter true
                 activity.targetArea == area.id
@@ -282,6 +290,53 @@ fun MoveScreen(
                     Spacer(modifier = Modifier.height(18.dp))
                 }
             }
+        }
+
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (indoorOnly) AbleyTeal.copy(alpha = 0.12f) else Color.White)
+                    .border(
+                        1.dp,
+                        if (indoorOnly) AbleyTeal else AbleySand,
+                        RoundedCornerShape(14.dp)
+                    )
+                    .clickable { indoorOnly = !indoorOnly }
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                    .testTag("indoor_only_filter"),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Home,
+                    contentDescription = null,
+                    tint = if (indoorOnly) AbleyTeal else Color.Black.copy(alpha = 0.4f),
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Indoor day",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Text(
+                        text = if (indoorOnly) {
+                            "Showing only what fits in a flat with the windows shut"
+                        } else {
+                            "Bad air or heavy rain? Hide anything that needs a park"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Black.copy(alpha = 0.55f)
+                    )
+                }
+                Switch(
+                    checked = indoorOnly,
+                    onCheckedChange = { indoorOnly = it },
+                    colors = SwitchDefaults.colors(checkedTrackColor = AbleyTeal)
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
         }
 
         // With 46 activities in the catalogue, what a parent needs first is "which of these is

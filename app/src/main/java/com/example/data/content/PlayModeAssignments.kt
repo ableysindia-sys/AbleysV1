@@ -80,7 +80,8 @@ object PlayModeAssignments {
      */
     fun apply(activities: List<MoveActivity>): List<MoveActivity> = activities.map { raw ->
         val activity = raw.copy(
-            householdAlternative = HouseholdAlternatives.forEquipment(raw.equipmentName)
+            householdAlternative = HouseholdAlternatives.forEquipment(raw.equipmentName),
+            spaceNeeded = IndoorPacing.classify(raw)
         )
         when {
             breathing.containsKey(activity.id) -> activity.copy(

@@ -132,6 +132,28 @@ data class BreathPattern(
     val totalSeconds: Int get() = (inhaleSeconds + holdSeconds + exhaleSeconds) * cycles
 }
 
+/**
+ * How much room, and what kind, an activity needs.
+ *
+ * Northern Indian winters close the parks for weeks at a time on air quality alone, and the
+ * monsoon does the same for different reasons. A family in a 2BHK on one of those days does not
+ * need the catalogue filtered by skill area, they need to know what can be done in the space
+ * between the sofa and the wall without opening a window.
+ */
+enum class SpaceNeeded(val displayName: String, val description: String) {
+    /** Seated or standing in one spot. A sofa, a chair, a lap. */
+    SEATED_SPOT("One spot", "Sitting or standing still. No clear floor needed."),
+
+    /** An arm span of clear floor. A cleared rug, the end of a bed. */
+    SMALL_ROOM("Small room", "About an arm span of clear floor."),
+
+    /** A corridor or the length of a room to move along. */
+    ROOM_LENGTH("Room length", "A corridor or the long side of a room."),
+
+    /** Needs running, throwing distance, or somewhere things can be thrown safely. */
+    OPEN_SPACE("Open space", "A park, terrace or hall. Not an indoor option.")
+}
+
 enum class MoveFormat(val displayName: String, val badgeColorHex: Long) {
     QUICK("5-minute Energy Burst", 0xFFEE4A41),
     DAILY("Morning Movement", 0xFF1F7A74),
@@ -161,6 +183,7 @@ data class MoveActivity(
     val reviewState: ReviewState = ReviewState.DRAFT,
     /** What to use instead when the equipment is not in the house. */
     val householdAlternative: String? = null,
+    val spaceNeeded: SpaceNeeded = SpaceNeeded.SMALL_ROOM,
     val playMode: PlayMode = PlayMode.GUIDED_STEPS,
     val breathPattern: BreathPattern? = null,
     val traceShape: TraceShape? = null,

@@ -51,6 +51,9 @@ import com.example.ui.theme.AbleyIvory
 import com.example.ui.theme.AbleySand
 import com.example.ui.theme.AbleySurfaceDark
 import com.example.ui.theme.AbleyTeal
+import com.example.share.ShareCardRenderer
+import androidx.compose.material3.Checkbox
+import androidx.compose.foundation.clickable
 
 @Composable
 fun ShareCardDialog(
@@ -60,6 +63,7 @@ fun ShareCardDialog(
 ) {
     val context = LocalContext.current
     var currentTheme by remember { mutableStateOf(initialData.theme) }
+    var includeName by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -161,12 +165,53 @@ fun ShareCardDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // A Status post reaches every contact in the phone. Whether a child's name goes
+                // with it is a decision the parent makes here, each time, rather than one the
+                // app makes quietly on their behalf.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { includeName = !includeName }
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = includeName,
+                        onCheckedChange = { includeName = it },
+                        modifier = Modifier.testTag("include_child_name_toggle")
+                    )
+                    Column {
+                        Text(
+                            text = "Include ${initialData.childName}'s name",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                        Text(
+                            text = if (includeName) {
+                                "The name will be on the image you send."
+                            } else {
+                                "The card will show the year only."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AbleyInk.copy(alpha = 0.55f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Share Button triggering Android native intent
                 Button(
                     onClick = {
-                        shareCardContent(context, initialData.copy(theme = currentTheme))
+                        shareCardContent(
+                            context,
+                            initialData.copy(theme = currentTheme),
+                            includeChildName = includeName
+                        )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AbleyCoral),
                     shape = RoundedCornerShape(28.dp),
@@ -315,22 +360,50 @@ fun ShareCardVisual(
     }
 }
 
-private fun shareCardContent(context: Context, data: ShareCardData) {
-    val shareText = """
-        Abley's · ${data.title}
-        ${data.bigNumber} ${data.unitLabel}
-        ${data.statsSubtitle}
-        ${data.childName} · ${data.ageOrYear}
-        
-        "Learn together. Move together. Remember it forever."
-        https://ableys.in
-    """.trimIndent()
+/**
+ * Shares the card as a 1080x1920 image, with the text as a caption.
+ *
+ * Image first, because the destination is WhatsApp Status and a family group, where a picture is
+ * the post and text is the caption under it. Falls back to text alone if the render or the write
+ * fails, so a share never simply does nothing.
+ *
+ * [includeChildName] defaults to false. Status reaches every contact in the phone; putting a
+ * child's name in front of all of them should be a parent's decision, not a default.
+ */
+private fun shareCardContent(
+    context: Context,
+    data: ShareCardData,
+    includeChildName: Boolean = false
+) {
+    val caption = buildString {
+        appendLine("Abley\u2019s \u00b7 ${data.title}")
+        appendLine("${data.bigNumber} ${data.unitLabel}")
+        appendLine(data.statsSubtitle)
+        if (includeChildName) appendLine("${data.childName} \u00b7 ${data.ageOrYear}")
+        appendLine()
+        appendLine("Learn together. Move together. Remember it forever.")
+        append("https://ableys.in")
+    }
+
+    val uri = runCatching {
+        ShareCardRenderer.writeToCache(
+            context,
+            ShareCardRenderer.render(data, includeChildName)
+        )
+    }.getOrNull()
 
     val sendIntent = Intent().apply {
         action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, shareText)
-        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, caption)
+        if (uri != null) {
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = "image/png"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } else {
+            type = "text/plain"
+        }
     }
-    val shareIntent = Intent.createChooser(sendIntent, "Share milestone with family")
+    val shareIntent = Intent.createChooser(sendIntent, "Share with family")
+    if (uri != null) shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     context.startActivity(shareIntent)
 }
