@@ -10,7 +10,11 @@ data class ChildProfile(
     val age: Int = 5,
     val birthMonth: String = "September",
     val avatarEmoji: String = "🦁",
+    val photoUri: String? = null,
     val supportLayerEnabled: Boolean = true,
+    // False until a parent has completed onboarding for this child. The seeded demo child is the
+    // only profile that starts with figures already on it; a real child starts at zero.
+    val isOnboarded: Boolean = false,
     val totalXp: Int = 1240,
     val level: Int = 7,
     val currentStreak: Int = 12,
@@ -67,7 +71,9 @@ data class MoveActivity(
     val equipmentName: String? = null,
     val equipmentSku: String? = null,
     val targetTags: List<String> = emptyList(),
-    val xpReward: Int = 40
+    val xpReward: Int = 40,
+    /** Document and page this was extracted from, shown to the reviewing practitioner. */
+    val sourceRef: String = ""
 )
 
 enum class MemoryType {
@@ -91,7 +97,9 @@ data class MemoryItem(
     val source: MemorySource = MemorySource.PARENT,
     val badgeTag: String = "Moment",
     val highlightColorHex: Long = 0xFFEE4A41,
-    val iconEmoji: String = "✨"
+    val iconEmoji: String = "✨",
+    /** Local content URI of the parent's photo, copied into app storage. Null for auto memories. */
+    val photoUri: String? = null
 ) {
     val type: MemoryType
         get() = if (source == MemorySource.ABLEY_AUTO) MemoryType.SYSTEM_GENERATED else MemoryType.PARENT_ADDED
@@ -128,7 +136,9 @@ data class TherapyProgram(
     val equipmentSku: String,
     val safetyGuidance: String,
     val steps: List<TherapySessionStep>,
-    val xpReward: Int = 50
+    val xpReward: Int = 50,
+    /** Document and page this was extracted from, shown to the reviewing practitioner. */
+    val sourceRef: String = ""
 ) {
     val durationMinutes: Int
         get() = totalMinutes
@@ -155,7 +165,13 @@ data class ParentStory(
     val excerpt: String,
     val fullStory: String,
     val practicalTips: List<String>,
-    val helpfulCount: Int = 42
+    val helpfulCount: Int = 42,
+    /**
+     * True for scaffold content written to exercise the screen. Real parent stories require
+     * sourcing, consent and review; until that exists the UI must label these as samples so
+     * nobody reads them as a real family's words.
+     */
+    val isPlaceholder: Boolean = false
 )
 
 @Entity(tableName = "achievements")

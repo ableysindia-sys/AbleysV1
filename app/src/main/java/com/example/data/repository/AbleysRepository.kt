@@ -2,6 +2,7 @@ package com.example.data.repository
 
 import android.content.Context
 import com.example.data.local.AppDatabase
+import com.example.data.content.AbleysContent
 import com.example.data.model.Achievement
 import com.example.data.model.ChildDevelopmentMilestone
 import com.example.data.model.ChildProfile
@@ -142,45 +143,8 @@ class AbleysRepository(context: Context) {
             achievementDao.insertAll(initialAchievements)
 
             // Seed Contextual Equipment matching Page 10, 13, 16 of spec
-            val initialEquipment = listOf(
-                EquipmentProduct(
-                    sku = "SKU-STEP-01",
-                    name = "Abley's Stepping Stones",
-                    category = "Move",
-                    description = "Stackable sensory balance stones with non-slip grip bases. Promotes coordination, dynamic balance, and spatial awareness.",
-                    benefits = "Gross motor balance, core engagement, unilateral leg stability.",
-                    isOwned = true,
-                    priceString = "$38.00"
-                ),
-                EquipmentProduct(
-                    sku = "SKU-SWING-02",
-                    name = "Platform Swing",
-                    category = "Therapy at Home",
-                    description = "Professional-grade padded vestibular therapy swing with multi-point suspension. Designed for calming input and linear vestibular integration.",
-                    benefits = "Linear acceleration, vestibular regulation, prone stability, soothing sensory reset.",
-                    isOwned = false,
-                    priceString = "$119.00"
-                ),
-                EquipmentProduct(
-                    sku = "SKU-BOARD-03",
-                    name = "Play Pattern Board",
-                    category = "Skills",
-                    description = "Tactile wooden peg & elastic pattern board. Hands off screen play to tangible physical problem solving.",
-                    benefits = "Fine motor pincer grasp, bilateral coordination, spatial geometric thinking.",
-                    isOwned = false,
-                    priceString = "$28.00"
-                ),
-                EquipmentProduct(
-                    sku = "SKU-BEAM-04",
-                    name = "Sensory Balance Beam",
-                    category = "Move",
-                    description = "Interlocking low-profile foam balance beam with tactile sensory textures.",
-                    benefits = "Tandem foot placement, body awareness, safe height.",
-                    isOwned = true,
-                    priceString = "$45.00"
-                )
-            )
-            equipmentDao.insertAll(initialEquipment)
+            // Equipment joined to the live ableys.in catalogue by product handle.
+            equipmentDao.insertAll(AbleysContent.equipmentCatalogue)
         }
 
         // Seed Developmental Milestones across Motor, Cognitive, and Speech if empty
@@ -340,197 +304,11 @@ class AbleysRepository(context: Context) {
     }
 
     // Static Curated Move Activities (Page 10 & 11)
-    val curatedMoveActivities: List<MoveActivity> = listOf(
-        MoveActivity(
-            id = "act_balance_adventure",
-            title = "Balance Adventure",
-            categoryBadge = "Balance Challenge",
-            durationMinutes = 8,
-            targetArea = "Balance",
-            motorType = "Gross motor",
-            format = MoveFormat.FOCUSED,
-            description = "A stepping stone journey navigating pretend rivers, jumping rocks, and balancing like a flamingo.",
-            demonstrationSteps = listOf(
-                "Step 1: Place stepping stones in a winding line across the room.",
-                "Step 2: Balance on each stone for 3 seconds before stepping forward.",
-                "Step 3: Freeze in single-leg flamingo pose on the final red stone!",
-                "Step 4: Turn around and leap with gentle landing back to start."
-            ),
-            equipmentName = "Abley's Stepping Stones",
-            equipmentSku = "SKU-STEP-01",
-            targetTags = listOf("Balance", "Gross motor", "Coordination", "Body awareness"),
-            xpReward = 40
-        ),
-        MoveActivity(
-            id = "act_5min_burst",
-            title = "5-Minute Energy Burst",
-            categoryBadge = "Quick Burst",
-            durationMinutes = 5,
-            targetArea = "Strength",
-            motorType = "Gross motor",
-            format = MoveFormat.QUICK,
-            description = "Fast, joyful movement bursts to shake off static sitting and energize the whole body.",
-            demonstrationSteps = listOf(
-                "Step 1: Star jumps like exploding rockets (30 seconds).",
-                "Step 2: Bear crawls across the carpet (45 seconds).",
-                "Step 3: Fast wall-pushes with strong arms (30 seconds).",
-                "Step 4: Slow mountain-breaths cool down (60 seconds)."
-            ),
-            targetTags = listOf("Strength", "Bilateral movement", "Mobility"),
-            xpReward = 30
-        ),
-        MoveActivity(
-            id = "act_morning_movement",
-            title = "Morning Movement",
-            categoryBadge = "Daily Ritual",
-            durationMinutes = 10,
-            targetArea = "Mobility",
-            motorType = "Body awareness",
-            format = MoveFormat.DAILY,
-            description = "Gentle stretching, reaching for the sun, and bilateral cross-crawls to prepare for a wonderful day.",
-            demonstrationSteps = listOf(
-                "Step 1: Reach high to the clouds, tip-toe stretch (1 min).",
-                "Step 2: Cross-body elbow-to-knee taps for bilateral wiring (2 min).",
-                "Step 3: Cat-cow back arches on hands and knees (2 min).",
-                "Step 4: Calm breathing circle sitting tall (2 min)."
-            ),
-            targetTags = listOf("Mobility", "Bilateral movement", "Body awareness"),
-            xpReward = 35
-        ),
-        MoveActivity(
-            id = "act_indoor_adventure",
-            title = "Indoor Adventure Obstacle",
-            categoryBadge = "Anywhere Adventure",
-            durationMinutes = 12,
-            targetArea = "Coordination",
-            motorType = "Gross motor",
-            format = MoveFormat.ANYWHERE,
-            description = "Turn your living room into a playful agility trail with pillows and stepping stones.",
-            demonstrationSteps = listOf(
-                "Step 1: Zig-zag run around chair legs and obstacles.",
-                "Step 2: High knee marches across the pillow river.",
-                "Step 3: Crab-walk sideways without tipping over.",
-                "Step 4: High-five victory celebration jump!"
-            ),
-            equipmentName = "Abley's Stepping Stones",
-            equipmentSku = "SKU-STEP-01",
-            targetTags = listOf("Coordination", "Bilateral movement", "Strength"),
-            xpReward = 45
-        ),
-        MoveActivity(
-            id = "act_7day_coordination",
-            title = "7-Day Coordination Challenge",
-            categoryBadge = "One Week Program",
-            durationMinutes = 15,
-            targetArea = "Bilateral coordination",
-            motorType = "Hand-eye coordination",
-            format = MoveFormat.ONE_WEEK,
-            description = "Day-by-day sequence enhancing reciprocal hand and foot coordination.",
-            demonstrationSteps = listOf(
-                "Step 1: Balloon keep-up with alternating palms.",
-                "Step 2: Opposite toe-touches with straight posture.",
-                "Step 3: Rolling ball target roll to partner's hands."
-            ),
-            targetTags = listOf("Hand-eye coordination", "Fine motor", "Gross motor"),
-            xpReward = 50
-        ),
-        MoveActivity(
-            id = "act_30day_move_grow",
-            title = "30-Day Move & Grow",
-            categoryBadge = "One Month Journey",
-            durationMinutes = 20,
-            targetArea = "Endurance & Agility",
-            motorType = "Gross motor",
-            format = MoveFormat.ONE_MONTH,
-            description = "The foundational movement progression creating lasting active habits for parent and child.",
-            demonstrationSteps = listOf(
-                "Step 1: Dynamic warm-up animal stretches.",
-                "Step 2: Core stability airplane holds.",
-                "Step 3: Balance agility stepping loop.",
-                "Step 4: Synchronized parent-child deep breaths."
-            ),
-            equipmentName = "Sensory Balance Beam",
-            equipmentSku = "SKU-BEAM-04",
-            targetTags = listOf("Gross motor", "Strength", "Balance", "Body awareness"),
-            xpReward = 60
-        )
-    )
-
-    // Curated Therapy at Home Programs (Page 13 & 14)
-    val curatedTherapyPrograms: List<TherapyProgram> = listOf(
-        TherapyProgram(
-            id = "prog_platform_swing",
-            title = "Platform Swing Foundations",
-            area = TherapyArea.SENSORY_REGULATION,
-            weekNumber = 2,
-            sessionNumber = 3,
-            totalMinutes = 18,
-            equipmentNeeded = "Platform Swing",
-            equipmentSku = "SKU-SWING-02",
-            safetyGuidance = "Ensure the swing is suspended at a safe height (no higher than child's knees from mat). Place thick safety crash mats underneath. Never spin rapidly; maintain gentle linear front-to-back oscillations.",
-            steps = listOf(
-                TherapySessionStep(1, "Linear movement", 3, "Gentle, predictable front-to-back rhythmic swinging to organize the central nervous system.", "Encourage calm eyes looking ahead at a fixed visual target."),
-                TherapySessionStep(2, "Reach & collect", 4, "While gently swinging, child reaches out to collect colorful beanbags placed on nearby stool.", "Promotes dynamic postural adjustments and vestibular-proprioceptive integration."),
-                TherapySessionStep(3, "Prone activity", 5, "Child lies on tummy across platform, holding handles, flying like a gentle superhero.", "Strengthens neck and upper back extensors against gravity."),
-                TherapySessionStep(4, "Target throw", 4, "Tossing collected beanbags into a floor bucket while swing gently slows.", "Challenges eye-hand coordination in a dynamic balance state."),
-                TherapySessionStep(5, "Cool down", 2, "Stationary slow breathing, gentle rocking to complete the session peacefully.", "Ground child with firm, reassuring downward pressure on shoulders if tolerated.")
-            )
-        ),
-        TherapyProgram(
-            id = "prog_sensory_calming",
-            title = "Proprioceptive Calming & Deep Pressure",
-            area = TherapyArea.SENSORY_REGULATION,
-            weekNumber = 1,
-            sessionNumber = 2,
-            totalMinutes = 15,
-            equipmentNeeded = "Sensory Balance Beam",
-            equipmentSku = "SKU-BEAM-04",
-            safetyGuidance = "Perform on a soft rug or mat. Keep voices calm and low. Allow child to step off at any point if they feel overstimulated.",
-            steps = listOf(
-                TherapySessionStep(1, "Heavy backpack crawl", 4, "Crawling like a turtle carrying a soft weighted pillow on back.", "Heavy work activates joint receptors to reduce anxiety."),
-                TherapySessionStep(2, "Sensory beam slow walk", 4, "Barefoot heel-to-toe walking along textured beam.", "Provides tactile input directly to plantar foot receptors."),
-                TherapySessionStep(3, "Steamroller cushion roll", 4, "Gently rolling a soft yoga ball or pillow over legs with firm pressure.", "Deep touch pressure calms fight-or-flight arousal."),
-                TherapySessionStep(4, "Deep breath reset", 3, "Smelling the pretend flower, blowing out the pretend birthday candle.", "Regulates heart rate and finishes session in a peaceful state.")
-            )
-        ),
-        TherapyProgram(
-            id = "prog_fine_motor_pincer",
-            title = "Fine Motor & Hand Strength Gym",
-            area = TherapyArea.FINE_MOTOR,
-            weekNumber = 2,
-            sessionNumber = 1,
-            totalMinutes = 14,
-            equipmentNeeded = "Play Pattern Board",
-            equipmentSku = "SKU-BOARD-03",
-            safetyGuidance = "Supervise small peg manipulation to prevent mouthing. Provide an ergonomic child chair with feet flat on the floor.",
-            steps = listOf(
-                TherapySessionStep(1, "Clay squeeze & pinch", 3, "Squeezing dough to make small meatballs using thumb and index finger.", "Isolates the radial side of the hand and builds thenar strength."),
-                TherapySessionStep(2, "Peg pattern matching", 5, "Placing colored pegs into matching holes on the pattern board.", "Develops tip-to-tip precision grasp and spatial orientation."),
-                TherapySessionStep(3, "Elastic stretch maze", 4, "Hooking elastic bands between pegs with two-handed coordination.", "Requires bilateral stabilization and graded finger force."),
-                TherapySessionStep(4, "Finger drum cool down", 2, "Tapping each finger sequentially to the thumb while counting.", "Encourages individual finger disassociation.")
-            )
-        ),
-        TherapyProgram(
-            id = "prog_gross_motor_core",
-            title = "Core Stability & Posture Boost",
-            area = TherapyArea.GROSS_MOTOR,
-            weekNumber = 3,
-            sessionNumber = 1,
-            totalMinutes = 16,
-            equipmentNeeded = "Abley's Stepping Stones",
-            equipmentSku = "SKU-STEP-01",
-            safetyGuidance = "Ensure safe spacing between stepping stones. Encourage slow controlled movements rather than racing.",
-            steps = listOf(
-                TherapySessionStep(1, "Bridge lifts", 4, "Lying on back, knees bent, lifting tummy up to make a bridge for toy cars.", "Activates gluteals and posterior chain."),
-                TherapySessionStep(2, "Stone high knees", 4, "Stepping up onto stone, holding opposite knee high for count of three.", "Challenging pelvic stability and single limb balance."),
-                TherapySessionStep(3, "Crab reach", 5, "Supporting body on hands and feet, reaching one hand to give parent high-five.", "Core anti-rotational strength and shoulder girdle stability."),
-                TherapySessionStep(4, "Child pose stretch", 3, "Resting on heels with arms extended forward.", "Lengthening spine and calming neuromuscular tone.")
-            )
-        )
-    )
-
-    // Curated Parent-to-Parent Stories (Page 15)
-    val curatedParentStories: List<ParentStory> = listOf(
+    /** 46 activities extracted from the Pediatric Therapy Activity Vault, each with its source page. */
+    val curatedMoveActivities: List<MoveActivity> = AbleysContent.moveActivities
+    /** 25 home programmes extracted from the OT corpus, each carrying its source page. */
+    val curatedTherapyPrograms: List<TherapyProgram> = AbleysContent.therapyPrograms
+    private val scaffoldParentStories: List<ParentStory> = listOf(
         ParentStory(
             id = "story_haircuts",
             topic = "Routines",
@@ -603,6 +381,13 @@ class AbleysRepository(context: Context) {
             )
         )
     )
+
+    /**
+     * Parent-to-Parent is a curated library. Until real stories are sourced, consented and
+     * reviewed, every entry is flagged so the UI can label it as a sample rather than let it
+     * pass as a real family's words.
+     */
+    val curatedParentStories: List<ParentStory> = scaffoldParentStories.map { it.copy(isPlaceholder = true) }
 
     // User Actions
     suspend fun logMoveActivityCompletion(activity: MoveActivity): String = withContext(Dispatchers.IO) {

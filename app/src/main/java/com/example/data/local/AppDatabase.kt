@@ -22,7 +22,7 @@ import com.example.data.model.SkillProgress
         EquipmentProduct::class,
         ChildDevelopmentMilestone::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(MilestoneConverters::class)
