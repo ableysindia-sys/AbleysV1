@@ -58,6 +58,14 @@ import com.example.ui.theme.AbleyInk
 import com.example.ui.theme.AbleyIvory
 import com.example.ui.theme.AbleyTeal
 import kotlinx.coroutines.delay
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import com.example.data.model.BreathPattern
+import com.example.data.model.PlayMode
+import com.example.data.model.TraceShape
+import com.example.ui.play.BreathPacerGame
+import com.example.ui.play.TracePathGame
+import com.example.ui.play.SteadyHoldGame
 
 @Composable
 fun ActivityPlayerDialog(
@@ -152,37 +160,43 @@ fun ActivityPlayerDialog(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Timer Circular Graphic
-                    Box(
-                        modifier = Modifier.size(160.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            progress = { secondsRemaining / 30f },
-                            color = AbleyCoral,
-                            trackColor = AbleyIvory,
-                            strokeWidth = 10.dp,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                    val haptics = LocalHapticFeedback.current
 
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "00:${if (secondsRemaining < 10) "0" else ""}$secondsRemaining",
-                                style = MaterialTheme.typography.headlineLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    color = AbleyInk,
-                                    fontSize = 32.sp
-                                )
-                            )
-                            Text(
-                                text = if (isTimerRunning) "PACING" else "PAUSED",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isTimerRunning) AbleyCoral else AbleyInk.copy(alpha = 0.5f),
-                                    letterSpacing = 1.sp
-                                )
+                    // Fifteen activities in the catalogue play as something other than a timer.
+                    // For those the game replaces the clock face; for the rest the clock is right,
+                    // because the activity is happening in the room and not on the screen.
+                    when (activity.playMode) {
+                        PlayMode.BREATH_PACER -> {
+                            BreathPacerGame(
+                                pattern = activity.breathPattern ?: BreathPattern(),
+                                onComplete = {
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    isCompleted = true
+                                }
                             )
                         }
+                        PlayMode.TRACE_PATH -> {
+                            TracePathGame(
+                                shape = activity.traceShape ?: TraceShape.SQUARE,
+                                onComplete = {
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    isCompleted = true
+                                }
+                            )
+                        }
+                        PlayMode.STEADY_HOLD -> {
+                            SteadyHoldGame(
+                                holdSeconds = activity.holdSeconds.coerceAtLeast(10),
+                                onComplete = {
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    isCompleted = true
+                                }
+                            )
+                        }
+                        PlayMode.GUIDED_STEPS -> GuidedStepsTimer(
+                            secondsRemaining = secondsRemaining,
+                            isTimerRunning = isTimerRunning
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -332,6 +346,45 @@ fun ActivityPlayerDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+/** The original clock face, kept for the eighty-three activities that happen off the screen. */
+@Composable
+private fun GuidedStepsTimer(
+    secondsRemaining: Int,
+    isTimerRunning: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.size(160.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            progress = { secondsRemaining / 30f },
+            color = AbleyCoral,
+            trackColor = AbleyIvory,
+            strokeWidth = 10.dp,
+            modifier = Modifier.fillMaxSize()
+        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "00:${if (secondsRemaining < 10) "0" else ""}$secondsRemaining",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.Black,
+                    color = AbleyInk,
+                    fontSize = 32.sp
+                )
+            )
+            Text(
+                text = if (isTimerRunning) "PACING" else "PAUSED",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = if (isTimerRunning) AbleyCoral else AbleyInk.copy(alpha = 0.5f),
+                    letterSpacing = 1.sp
+                )
+            )
         }
     }
 }

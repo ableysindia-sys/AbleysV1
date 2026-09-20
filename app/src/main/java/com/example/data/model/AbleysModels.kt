@@ -74,6 +74,55 @@ enum class ReviewState {
     APPROVED
 }
 
+/**
+ * How an activity is played on screen.
+ *
+ * Most of this catalogue is physical and parent-led, and for those the screen's job is to pace
+ * and get out of the way -- a stepping-stone run does not improve by becoming a game about
+ * stepping stones. [GUIDED_STEPS] is therefore the default and the majority.
+ *
+ * The exceptions are the three where a screen genuinely adds something: a breath needs a pacer
+ * to follow, a pre-writing shape needs a path to trace, and a balance hold needs something that
+ * can actually measure whether the child is still.
+ */
+enum class PlayMode {
+    /** Step list with a timer. The screen paces; the activity happens in the room. */
+    GUIDED_STEPS,
+
+    /** An expanding and contracting shape the child breathes with. */
+    BREATH_PACER,
+
+    /** A path traced with a fingertip, scored on how closely it is followed. */
+    TRACE_PATH,
+
+    /** Phone held or balanced on; the accelerometer measures stillness. */
+    STEADY_HOLD
+}
+
+/** Shapes the trace game can draw. */
+enum class TraceShape {
+    SQUARE,
+    TRIANGLE,
+    HAND,
+    ZIGZAG,
+    WAVE,
+    SPIRAL
+}
+
+/**
+ * Timing for one breath cycle, in seconds. A zero hold is a hold the child never notices,
+ * which is what young children need -- the long holds in adult breathing scripts are the
+ * first thing to go wrong with a four-year-old.
+ */
+data class BreathPattern(
+    val inhaleSeconds: Int = 4,
+    val holdSeconds: Int = 0,
+    val exhaleSeconds: Int = 4,
+    val cycles: Int = 5
+) {
+    val totalSeconds: Int get() = (inhaleSeconds + holdSeconds + exhaleSeconds) * cycles
+}
+
 enum class MoveFormat(val displayName: String, val badgeColorHex: Long) {
     QUICK("5-minute Energy Burst", 0xFFEE4A41),
     DAILY("Morning Movement", 0xFF1F7A74),
@@ -100,7 +149,12 @@ data class MoveActivity(
     /** Document and page this was extracted from, shown to the reviewing practitioner. */
     val sourceRef: String = "",
     val reviewDiscipline: ReviewDiscipline = ReviewDiscipline.OCCUPATIONAL_THERAPY,
-    val reviewState: ReviewState = ReviewState.DRAFT
+    val reviewState: ReviewState = ReviewState.DRAFT,
+    val playMode: PlayMode = PlayMode.GUIDED_STEPS,
+    val breathPattern: BreathPattern? = null,
+    val traceShape: TraceShape? = null,
+    /** Seconds of stillness a STEADY_HOLD activity asks for. */
+    val holdSeconds: Int = 0
 )
 
 /** One day of a multi-day Move programme, pointing at an activity in the catalogue. */
