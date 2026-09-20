@@ -367,7 +367,7 @@ fun GrowInsightsDashboardCard(
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val tabs = listOf("Frequency (Velocity)", "Category Mastery", "Parent Insights")
+                val tabs = listOf("Frequency (Velocity)", "Consistency by Area", "Parent Insights")
                 tabs.forEachIndexed { index, label ->
                     val isSelected = selectedViewIndex == index
                     Box(

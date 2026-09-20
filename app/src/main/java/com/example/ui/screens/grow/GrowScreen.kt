@@ -75,45 +75,45 @@ data class SkillPillarMetadata(
 
 fun getSkillPillarMetadata(skillArea: SkillArea): SkillPillarMetadata {
     return when (skillArea) {
-        SkillArea.COMMUNICATION -> SkillPillarMetadata(
-            index = "01",
-            focusDescription = "Verbal expression, dialogue exchange & phonics articulation",
+        SkillArea.PLAYING_WITH_OTHERS -> SkillPillarMetadata(
+            index = "07",
+            focusDescription = "Turn-taking, shared play and joining in with others",
             accentColor = AbleyCoral,
             baseTargetXp = 350
         )
-        SkillArea.LITERACY -> SkillPillarMetadata(
-            index = "02",
-            focusDescription = "Letter recognition, phonics blending & sight word comprehension",
+        SkillArea.HANDS_FINE_MOTOR -> SkillPillarMetadata(
+            index = "05",
+            focusDescription = "Pinch and grip strength, scissors and early handwriting",
             accentColor = AbleyTeal,
             baseTargetXp = 300
         )
-        SkillArea.NUMBERS -> SkillPillarMetadata(
+        SkillArea.MOVEMENT_ENERGY -> SkillPillarMetadata(
             index = "03",
-            focusDescription = "1-to-1 counting, geometric shapes & spatial math intuition",
+            focusDescription = "Balance, coordination and burning off restless energy",
             accentColor = AbleyGold,
             baseTargetXp = 400
         )
-        SkillArea.THINKING -> SkillPillarMetadata(
-            index = "04",
-            focusDescription = "Pattern recognition, sequence planning & logic problem solving",
+        SkillArea.FOCUS_ATTENTION -> SkillPillarMetadata(
+            index = "02",
+            focusDescription = "Looking carefully, remembering, sequencing and staying with a task",
             accentColor = Color(0xFF3868A8),
             baseTargetXp = 200
         )
-        SkillArea.EMOTIONS -> SkillPillarMetadata(
-            index = "05",
-            focusDescription = "Emotional naming, calming strategies & empathy awareness",
+        SkillArea.CALM_COMFORT -> SkillPillarMetadata(
+            index = "01",
+            focusDescription = "Settling the body, easing big feelings and finding calm together",
             accentColor = Color(0xFFC74B6A),
             baseTargetXp = 300
         )
-        SkillArea.CREATIVITY -> SkillPillarMetadata(
-            index = "06",
-            focusDescription = "Visual arts, melody rhythms & imaginative open construction",
+        SkillArea.STRENGTH_BODY_AWARENESS -> SkillPillarMetadata(
+            index = "04",
+            focusDescription = "Core strength, heavy work and knowing where the body is",
             accentColor = Color(0xFF2E8B75),
             baseTargetXp = 350
         )
-        SkillArea.EVERYDAY_SKILLS -> SkillPillarMetadata(
-            index = "07",
-            focusDescription = "Self-care routines, tool coordination & practical independence",
+        SkillArea.EVERYDAY_INDEPENDENCE -> SkillPillarMetadata(
+            index = "06",
+            focusDescription = "Dressing, mealtimes, hygiene and everyday routines",
             accentColor = Color(0xFFCC6628),
             baseTargetXp = 200
         )
@@ -136,15 +136,15 @@ fun GrowScreen(
     val level = childProfile?.level ?: 7
     val streak = childProfile?.currentStreak ?: 12
 
-    // The 7 Key Pillars strictly in order
+    // The 7 parent-facing need areas, in order
     val orderedSkillAreas = listOf(
-        SkillArea.COMMUNICATION,
-        SkillArea.LITERACY,
-        SkillArea.NUMBERS,
-        SkillArea.THINKING,
-        SkillArea.EMOTIONS,
-        SkillArea.CREATIVITY,
-        SkillArea.EVERYDAY_SKILLS
+        SkillArea.CALM_COMFORT,
+        SkillArea.FOCUS_ATTENTION,
+        SkillArea.MOVEMENT_ENERGY,
+        SkillArea.STRENGTH_BODY_AWARENESS,
+        SkillArea.HANDS_FINE_MOTOR,
+        SkillArea.EVERYDAY_INDEPENDENCE,
+        SkillArea.PLAYING_WITH_OTHERS
     )
 
     LazyColumn(
@@ -367,33 +367,33 @@ fun GrowScreen(
             val progress = skillProgressList.firstOrNull { it.skillAreaId == skillArea.id }
 
             val currentLevel = progress?.currentLevel ?: when (skillArea) {
-                SkillArea.COMMUNICATION -> 4
-                SkillArea.LITERACY -> 3
-                SkillArea.NUMBERS -> 5
-                SkillArea.THINKING -> 2
-                SkillArea.EMOTIONS -> 3
-                SkillArea.CREATIVITY -> 4
-                SkillArea.EVERYDAY_SKILLS -> 2
+                SkillArea.PLAYING_WITH_OTHERS -> 4
+                SkillArea.HANDS_FINE_MOTOR -> 3
+                SkillArea.MOVEMENT_ENERGY -> 5
+                SkillArea.FOCUS_ATTENTION -> 2
+                SkillArea.CALM_COMFORT -> 3
+                SkillArea.STRENGTH_BODY_AWARENESS -> 4
+                SkillArea.EVERYDAY_INDEPENDENCE -> 2
             }
 
             val xpEarned = progress?.xpEarned ?: when (skillArea) {
-                SkillArea.COMMUNICATION -> 280
-                SkillArea.LITERACY -> 210
-                SkillArea.NUMBERS -> 340
-                SkillArea.THINKING -> 130
-                SkillArea.EMOTIONS -> 190
-                SkillArea.CREATIVITY -> 270
-                SkillArea.EVERYDAY_SKILLS -> 120
+                SkillArea.PLAYING_WITH_OTHERS -> 280
+                SkillArea.HANDS_FINE_MOTOR -> 210
+                SkillArea.MOVEMENT_ENERGY -> 340
+                SkillArea.FOCUS_ATTENTION -> 130
+                SkillArea.CALM_COMFORT -> 190
+                SkillArea.STRENGTH_BODY_AWARENESS -> 270
+                SkillArea.EVERYDAY_INDEPENDENCE -> 120
             }
 
             val gamesCompleted = progress?.gamesCompleted ?: when (skillArea) {
-                SkillArea.COMMUNICATION -> 14
-                SkillArea.LITERACY -> 10
-                SkillArea.NUMBERS -> 18
-                SkillArea.THINKING -> 6
-                SkillArea.EMOTIONS -> 9
-                SkillArea.CREATIVITY -> 13
-                SkillArea.EVERYDAY_SKILLS -> 5
+                SkillArea.PLAYING_WITH_OTHERS -> 14
+                SkillArea.HANDS_FINE_MOTOR -> 10
+                SkillArea.MOVEMENT_ENERGY -> 18
+                SkillArea.FOCUS_ATTENTION -> 6
+                SkillArea.CALM_COMFORT -> 9
+                SkillArea.STRENGTH_BODY_AWARENESS -> 13
+                SkillArea.EVERYDAY_INDEPENDENCE -> 5
             }
 
             SkillMapRowCard(
