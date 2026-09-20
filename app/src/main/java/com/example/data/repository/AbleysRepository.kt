@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import com.example.analytics.Analytics
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -605,6 +606,11 @@ class AbleysRepository(context: Context) {
 
     // User Actions
     suspend fun logMoveActivityCompletion(activity: MoveActivity): String = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.MOVE_ACTIVITY_COMPLETED, mapOf(
+            "activity_id" to activity.id,
+            "target_area" to activity.targetArea,
+            "duration_minutes" to activity.durationMinutes
+        ))
         childDao.addXp("child_default", activity.xpReward)
         childDao.addMinutesMoved("child_default", activity.durationMinutes)
 
@@ -633,6 +639,12 @@ class AbleysRepository(context: Context) {
     }
 
     suspend fun logTherapySessionCompletion(program: TherapyProgram): String = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.THERAPY_SESSION_COMPLETED, mapOf(
+            "program_id" to program.id,
+            "week" to program.weekNumber,
+            "session" to program.sessionNumber,
+            "equipment_sku" to program.equipmentSku
+        ))
         val xpGain = 45
         childDao.addXp("child_default", xpGain)
         childDao.addMinutesMoved("child_default", program.totalMinutes)
@@ -655,6 +667,10 @@ class AbleysRepository(context: Context) {
     }
 
     suspend fun completeSkillGame(area: SkillArea, xpReward: Int = 25): String = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.SKILL_SESSION_COMPLETED, mapOf(
+            "area" to area.id,
+            "store_tag" to area.storeTag
+        ))
         skillDao.levelUpSkill(area.id, xpReward)
         childDao.addXp("child_default", xpReward)
 
@@ -682,6 +698,7 @@ class AbleysRepository(context: Context) {
     }
 
     suspend fun addParentMemory(title: String, caption: String, dateString: String, emoji: String = "✨") = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.MEMORY_CAPTURED, mapOf("source" to "parent"))
         memoryDao.insertMemory(
             MemoryItem(
                 title = title,
