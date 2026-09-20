@@ -49,6 +49,9 @@ import com.example.ui.theme.AbleyInk
 import com.example.ui.theme.AbleyIvory
 import com.example.ui.theme.AbleySand
 import com.example.ui.theme.AbleyTeal
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.VerifiedUser
+import com.example.data.model.ReviewState
 
 @Composable
 fun ActivityDetailScreen(
@@ -274,6 +277,11 @@ fun ActivityDetailScreen(
                 )
             }
 
+            // Who has signed this off, stated plainly. An app that sells equipment alongside
+            // its activities has to be exact about which of them a practitioner has actually
+            // read, or every claim on every screen is worth less.
+            item { ReviewStatusRow(activity = activity) }
+
             // 2 & 3. Equipment Needed & Contextual Shop Link (Page 10, #2 & #3)
             item {
                 Column {
@@ -399,6 +407,51 @@ fun ActivityDetailScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(30.dp))
+            }
+        }
+    }
+}
+
+/** States the review position for one activity: approved by whom, or not yet reviewed. */
+@Composable
+private fun ReviewStatusRow(
+    activity: MoveActivity,
+    modifier: Modifier = Modifier
+) {
+    val approved = activity.reviewState == ReviewState.APPROVED
+    val accent = if (approved) AbleyTeal else AbleyInk.copy(alpha = 0.45f)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(AbleySand.copy(alpha = 0.4f))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .testTag("review_status_${activity.id}"),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (approved) Icons.Filled.VerifiedUser else Icons.Filled.Schedule,
+            contentDescription = null,
+            tint = accent,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(
+                text = if (approved) {
+                    "Reviewed by a ${activity.reviewDiscipline.displayName.lowercase()}"
+                } else {
+                    "Awaiting review by a ${activity.reviewDiscipline.displayName.lowercase()}"
+                },
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = AbleyInk.copy(alpha = 0.8f)
+            )
+            if (!approved) {
+                Text(
+                    text = "Use your own judgement and stop if your child is not enjoying it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AbleyInk.copy(alpha = 0.55f)
+                )
             }
         }
     }

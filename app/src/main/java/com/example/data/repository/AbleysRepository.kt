@@ -5,6 +5,7 @@ import com.example.data.local.AppDatabase
 import com.example.data.content.AbleysContent
 import com.example.data.content.AchievementCatalogue
 import com.example.data.content.RegulationActivities
+import com.example.data.content.StrategyActivities
 import com.example.data.model.Achievement
 import com.example.data.model.ChildDevelopmentMilestone
 import com.example.data.model.ChildProfile
@@ -346,7 +347,9 @@ class AbleysRepository(context: Context) {
     // Static Curated Move Activities (Page 10 & 11)
     /** 46 activities extracted from the Pediatric Therapy Activity Vault, each with its source page. */
     val curatedMoveActivities: List<MoveActivity> =
-        AbleysContent.moveActivities + RegulationActivities.activities
+        AbleysContent.moveActivities +
+            RegulationActivities.activities +
+            StrategyActivities.all
 
     /** Multi-day challenges composed over the activity catalogue. */
     val curatedMovePrograms: List<MoveProgram> = AbleysContent.movePrograms

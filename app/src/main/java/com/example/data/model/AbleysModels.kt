@@ -52,6 +52,28 @@ data class SkillProgress(
     val childId: String = "child_default"
 )
 
+/**
+ * Which practitioner has to sign a piece of content off.
+ *
+ * The panel started as one occupational therapist. Content about worry, self-talk and thought
+ * patterns is a psychologist's call rather than an OT's, and sleep is its own discipline, so
+ * each item names the chair it has to go past instead of everything queueing behind one person.
+ */
+enum class ReviewDiscipline(val displayName: String, val shortLabel: String) {
+    OCCUPATIONAL_THERAPY("Occupational therapist", "OT"),
+    PSYCHOLOGY("Child psychologist", "Psychologist"),
+    SLEEP("Sleep practitioner", "Sleep practitioner"),
+    SPEECH_LANGUAGE("Speech and language therapist", "SLT"),
+    PARENTING("Parenting practitioner", "Parenting practitioner")
+}
+
+/** Where an item has got to with its reviewer. Nothing ships claiming a review it has not had. */
+enum class ReviewState {
+    DRAFT,
+    IN_REVIEW,
+    APPROVED
+}
+
 enum class MoveFormat(val displayName: String, val badgeColorHex: Long) {
     QUICK("5-minute Energy Burst", 0xFFEE4A41),
     DAILY("Morning Movement", 0xFF1F7A74),
@@ -76,7 +98,9 @@ data class MoveActivity(
     val targetTags: List<String> = emptyList(),
     val xpReward: Int = 40,
     /** Document and page this was extracted from, shown to the reviewing practitioner. */
-    val sourceRef: String = ""
+    val sourceRef: String = "",
+    val reviewDiscipline: ReviewDiscipline = ReviewDiscipline.OCCUPATIONAL_THERAPY,
+    val reviewState: ReviewState = ReviewState.DRAFT
 )
 
 /** One day of a multi-day Move programme, pointing at an activity in the catalogue. */
@@ -177,7 +201,9 @@ data class TherapyProgram(
     val steps: List<TherapySessionStep>,
     val xpReward: Int = 50,
     /** Document and page this was extracted from, shown to the reviewing practitioner. */
-    val sourceRef: String = ""
+    val sourceRef: String = "",
+    val reviewDiscipline: ReviewDiscipline = ReviewDiscipline.OCCUPATIONAL_THERAPY,
+    val reviewState: ReviewState = ReviewState.DRAFT
 ) {
     val durationMinutes: Int
         get() = totalMinutes
