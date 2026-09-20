@@ -1,7 +1,6 @@
 package com.example.ui.play
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,8 +27,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.ui.theme.AbleySand
-import kotlin.math.hypot
-import kotlin.random.Random
+import com.example.play.physics.ParticleField
 
 private const val PARTICLES = 46
 private val Lavender = Color(0xFFB9A7E0)
@@ -52,79 +50,12 @@ private val SoftTeal = Color(0xFF6FB3AE)
 fun LiquidMotionToy(
     modifier: Modifier = Modifier
 ) {
-    val xs = remember { FloatArray(PARTICLES) }
-    val ys = remember { FloatArray(PARTICLES) }
-    val vxs = remember { FloatArray(PARTICLES) }
-    val vys = remember { FloatArray(PARTICLES) }
-    val radii = remember { FloatArray(PARTICLES) }
-    var seeded by remember { mutableStateOf(false) }
-    var touch by remember { mutableStateOf<Offset?>(null) }
+    val field = remember { ParticleField(count = PARTICLES) }
     var side by remember { mutableFloatStateOf(0f) }
 
-    if (!seeded) {
-        val rng = Random(7)
-        for (i in 0 until PARTICLES) {
-            xs[i] = rng.nextFloat()
-            ys[i] = rng.nextFloat()
-            vxs[i] = 0f
-            vys[i] = 0f
-            radii[i] = 0.055f + rng.nextFloat() * 0.055f
-        }
-        seeded = true
-    }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            withFrameNanos { }
-            val t = touch
-            for (i in 0 until PARTICLES) {
-                // Barely-there gravity: a drift downward, not a fall.
-                vys[i] += 0.00016f
-
-                if (t != null && side > 0f) {
-                    val tx = t.x / side
-                    val ty = t.y / side
-                    val dx = xs[i] - tx
-                    val dy = ys[i] - ty
-                    val d = hypot(dx, dy)
-                    val reach = 0.30f
-                    if (d < reach && d > 1e-4f) {
-                        val push = (1f - d / reach) * 0.0024f
-                        vxs[i] += (dx / d) * push
-                        vys[i] += (dy / d) * push
-                    }
-                }
-
-                // Soft separation, so the liquid keeps a body instead of collapsing to a point.
-                for (j in i + 1 until PARTICLES) {
-                    val dx = xs[j] - xs[i]
-                    val dy = ys[j] - ys[i]
-                    val d = hypot(dx, dy)
-                    val minD = (radii[i] + radii[j]) * 0.62f
-                    if (d in 1e-4f..minD) {
-                        val push = (minD - d) * 0.010f
-                        vxs[i] -= (dx / d) * push
-                        vys[i] -= (dy / d) * push
-                        vxs[j] += (dx / d) * push
-                        vys[j] += (dy / d) * push
-                    }
-                }
-
-                // Viscosity. This number is the difference between gel and water.
-                vxs[i] *= 0.936f
-                vys[i] *= 0.936f
-
-                xs[i] += vxs[i]
-                ys[i] += vys[i]
-
-                // Walls absorb rather than bounce. A bounce reads as energy; this should have none.
-                val r = radii[i] * 0.5f
-                if (xs[i] < r) { xs[i] = r; vxs[i] *= -0.24f }
-                if (xs[i] > 1f - r) { xs[i] = 1f - r; vxs[i] *= -0.24f }
-                if (ys[i] < r) { ys[i] = r; vys[i] *= -0.24f }
-                if (ys[i] > 1f - r) { ys[i] = 1f - r; vys[i] *= -0.24f }
-            }
-        }
+    // Fixed-rate stepping, so the liquid moves at the same speed on a 60Hz phone and a 120Hz one.
+    LaunchedEffect(field) {
+        runFixedStepLoop(stepHz = 60) { field.step() }
     }
 
     Column(
@@ -137,11 +68,17 @@ fun LiquidMotionToy(
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { touch = it },
-                        onDragEnd = { touch = null },
-                        onDragCancel = { touch = null }
-                    ) { change, _ -> touch = change.position }
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            field.clearTouches()
+                            if (side > 0f) {
+                                event.changes
+                                    .filter { it.pressed }
+                                    .forEach { field.press(it.position.x / side, it.position.y / side) }
+                            }
+                        }
+                    }
                 }
         ) {
             side = size.minDimension
@@ -152,8 +89,8 @@ fun LiquidMotionToy(
             // Overlapping soft gradients read as one body of liquid rather than as dots.
             for (i in 0 until PARTICLES) {
                 val c = if (i % 2 == 0) SoftTeal else Lavender
-                val centre = Offset(xs[i] * size.width, ys[i] * size.height)
-                val r = radii[i] * size.minDimension
+                val centre = Offset(field.xs[i] * size.width, field.ys[i] * size.height)
+                val r = field.radii[i] * size.minDimension
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(c.copy(alpha = 0.40f), c.copy(alpha = 0f)),

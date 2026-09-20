@@ -6,7 +6,6 @@ import android.media.AudioManager
 import android.media.AudioTrack
 import android.util.Log
 import kotlin.concurrent.thread
-import kotlin.random.Random
 
 /**
  * A continuous sound bed behind an activity.
@@ -89,38 +88,20 @@ class AmbientSound {
         audioTrack.play()
 
         thread(name = "ableys-ambient", isDaemon = true) {
+            // Audio priority, not default. The work is tiny -- see PhysicsBudgetTest for the
+            // duty cycle -- but a buffer that arrives late is an audible click, and at default
+            // priority this thread queues behind ordinary work including the UI.
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO)
+
             val buffer = ShortArray(BUFFER_FRAMES)
-            var brown = 0f
-            val pink = FloatArray(3)
-            var phase = 0.0
-            val rng = Random(1)
+            val generator = NoiseGenerator(bed, SAMPLE_RATE)
 
             while (running) {
-                for (i in buffer.indices) {
-                    val white = rng.nextFloat() * 2f - 1f
-                    val sample = when (bed) {
-                        Bed.BROWN_NOISE -> {
-                            // Integrated white noise, leaked back towards zero so it cannot drift.
-                            brown = (brown + white * 0.02f).coerceIn(-1f, 1f) * 0.997f
-                            brown * 3.2f
-                        }
-                        Bed.PINK_NOISE -> {
-                            // Three one-pole filters summed: the cheap, standard pink approximation.
-                            pink[0] = 0.99765f * pink[0] + white * 0.0990460f
-                            pink[1] = 0.96300f * pink[1] + white * 0.2965164f
-                            pink[2] = 0.57000f * pink[2] + white * 1.0526913f
-                            (pink[0] + pink[1] + pink[2] + white * 0.1848f) * 0.22f
-                        }
-                        Bed.BREATH_WASH -> {
-                            brown = (brown + white * 0.02f).coerceIn(-1f, 1f) * 0.997f
-                            // Ten-second swell: in for five, out for five.
-                            phase += 2.0 * Math.PI / (SAMPLE_RATE * 10.0)
-                            val swell = (0.55 + 0.45 * kotlin.math.sin(phase)).toFloat()
-                            brown * 3.2f * swell
-                        }
-                    }
-                    buffer[i] = (sample.coerceIn(-1f, 1f) * Short.MAX_VALUE * 0.6f).toInt().toShort()
-                }
+                generator.fill(buffer)
+
+                // Blocking write. This is what paces the thread: it returns only when the
+                // track has room, so the loop spends nearly all its time parked rather than
+                // spinning, and generation happens roughly once per buffer of playback.
                 val written = runCatching { audioTrack.write(buffer, 0, buffer.size) }.getOrDefault(-1)
                 if (written < 0) break
             }

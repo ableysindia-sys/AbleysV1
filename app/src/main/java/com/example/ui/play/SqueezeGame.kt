@@ -1,7 +1,6 @@
 package com.example.ui.play
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,12 +29,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.withFrameNanos
 import com.example.play.feedback.Haptics
 import com.example.play.physics.SoftBody
 import com.example.ui.theme.AbleyCoral
 import com.example.ui.theme.AbleySand
 import com.example.ui.theme.AbleyTeal
+import androidx.compose.runtime.mutableStateListOf
 
 /**
  * A blob that squashes under a finger and bulges out somewhere else.
@@ -56,7 +55,7 @@ fun SqueezeGame(
 ) {
     val context = LocalContext.current
     val body = remember { SoftBody() }
-    var touch by remember { mutableStateOf<Offset?>(null) }
+    val touches = remember { mutableStateListOf<Offset>() }
     var canvasPx by remember { mutableFloatStateOf(0f) }
     var squeezes by remember { mutableIntStateOf(0) }
     var wasSquashed by remember { mutableStateOf(false) }
@@ -66,11 +65,12 @@ fun SqueezeGame(
     // Physics runs off the frame clock rather than a timer, so it stays in step with what is
     // drawn on a slow device instead of racing ahead of it.
     LaunchedEffect(Unit) {
-        while (true) {
-            withFrameNanos { }
-            touch?.let { t ->
-                if (canvasPx > 0f) {
-                    val half = canvasPx / 2f
+        runFixedStepLoop(stepHz = 60) {
+            if (canvasPx > 0f) {
+                val half = canvasPx / 2f
+                // Each finger presses independently, so a two-handed squeeze flattens the blob
+                // from both sides instead of denting it once.
+                touches.forEach { t ->
                     body.press(
                         px = (t.x - half) / half,
                         py = (t.y - half) / half,
@@ -109,11 +109,13 @@ fun SqueezeGame(
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { touch = it },
-                        onDragEnd = { touch = null },
-                        onDragCancel = { touch = null }
-                    ) { change, _ -> touch = change.position }
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            touches.clear()
+                            event.changes.filter { it.pressed }.forEach { touches.add(it.position) }
+                        }
+                    }
                 }
         ) {
             canvasPx = size.minDimension
