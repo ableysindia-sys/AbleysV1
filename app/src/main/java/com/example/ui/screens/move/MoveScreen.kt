@@ -69,6 +69,7 @@ import com.example.ui.theme.AbleyTealLight
 import com.example.ui.theme.DmSansFontFamily
 import com.example.ui.theme.PoppinsFontFamily
 import com.example.data.model.MoveProgram
+import com.example.data.model.SkillArea
 
 @Composable
 fun MoveScreen(
@@ -85,26 +86,29 @@ fun MoveScreen(
 ) {
     val childName = childProfile?.name ?: "Aarav"
     var selectedFormatFilter by remember { mutableStateOf("All") }
+    var selectedAreaFilter by remember { mutableStateOf<SkillArea?>(null) }
 
-    val formatFilters = listOf("All", "Quick Bursts", "Daily Rituals", "Indoor Agility", "One Week", "One Month")
+    // One Week and One Month were dropped from this row: those formats belong to the programmes
+    // rail above, so as activity filters they could only ever return nothing.
+    val formatFilters = listOf("All", "Quick Bursts", "Daily Rituals", "Indoor Agility")
 
-    val filteredActivities = remember(selectedFormatFilter, activities) {
-        if (selectedFormatFilter == "All") {
-            activities
-        } else {
-            val query = when (selectedFormatFilter) {
-                "Quick Bursts" -> "Quick"
-                "Daily Rituals" -> "Daily"
-                "Indoor Agility" -> "Anywhere"
-                "One Week" -> "One Week"
-                "One Month" -> "One Month"
-                else -> selectedFormatFilter
+    val filteredActivities = remember(selectedFormatFilter, selectedAreaFilter, activities) {
+        activities
+            .filter { activity ->
+                val area = selectedAreaFilter ?: return@filter true
+                activity.targetArea == area.id
             }
-            activities.filter {
-                it.categoryBadge.contains(query, ignoreCase = true) ||
-                        it.format.name.contains(query, ignoreCase = true)
+            .filter { activity ->
+                if (selectedFormatFilter == "All") return@filter true
+                val query = when (selectedFormatFilter) {
+                    "Quick Bursts" -> "Quick"
+                    "Daily Rituals" -> "Daily"
+                    "Indoor Agility" -> "Anywhere"
+                    else -> selectedFormatFilter
+                }
+                activity.categoryBadge.contains(query, ignoreCase = true) ||
+                    activity.format.name.contains(query, ignoreCase = true)
             }
-        }
     }
 
     LazyColumn(
@@ -277,6 +281,36 @@ fun MoveScreen(
                     }
                     Spacer(modifier = Modifier.height(18.dp))
                 }
+            }
+        }
+
+        // With 46 activities in the catalogue, what a parent needs first is "which of these is
+        // for the thing we are struggling with today" -- so the needs areas filter above format.
+        item {
+            Column {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    item {
+                        MoveAreaChip(
+                            label = "All areas",
+                            selected = selectedAreaFilter == null,
+                            onClick = { selectedAreaFilter = null }
+                        )
+                    }
+                    items(SkillArea.entries.toList(), key = { it.id }) { area ->
+                        MoveAreaChip(
+                            label = area.displayName,
+                            selected = selectedAreaFilter == area,
+                            onClick = {
+                                selectedAreaFilter = if (selectedAreaFilter == area) null else area
+                            }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
             }
         }
 
@@ -736,6 +770,32 @@ private fun MoveProgramCard(
             text = if (started) "Day ${daysComplete + 1} next" else "Not started",
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
             color = if (started) accent else Color.Black.copy(alpha = 0.45f)
+        )
+    }
+}
+
+@Composable
+private fun MoveAreaChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (selected) AbleyCoral else Color.White)
+            .border(1.dp, if (selected) AbleyCoral else AbleySand, RoundedCornerShape(20.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .testTag("move_area_chip_$label")
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+            ),
+            color = if (selected) Color.White else Color.Black.copy(alpha = 0.7f)
         )
     }
 }

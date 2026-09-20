@@ -958,6 +958,24 @@ fun ParentStoryCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            if (story.isPlaceholder) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(AbleyInk.copy(alpha = 0.08f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "SAMPLE STORY · NOT A REAL FAMILY",
+                        fontFamily = DmSansFontFamily,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AbleyInk.copy(alpha = 0.6f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
             Text(
                 text = "By ${story.authorName} (${story.authorRole})",
                 fontFamily = DmSansFontFamily,

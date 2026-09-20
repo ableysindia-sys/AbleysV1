@@ -120,6 +120,19 @@ fun ParentStoryDetailDialog(
                             )
                         )
 
+                        if (story.isPlaceholder) {
+                            Text(
+                                text = "Sample story. Written to show how this screen works, " +
+                                    "not shared by a real family. Real parent stories are " +
+                                    "sourced, consented and reviewed before they appear here.",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = AbleyInk.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
                         Text(
                             text = "Shared by ${story.authorRole}",
                             style = MaterialTheme.typography.bodyMedium.copy(
