@@ -8,6 +8,8 @@ import com.example.data.model.ChildDevelopmentMilestone
 import com.example.data.model.ChildProfile
 import com.example.data.model.EquipmentProduct
 import com.example.data.model.MemoryItem
+import com.example.data.model.MoveProgram
+import com.example.data.model.MoveProgramDayProgress
 import com.example.data.model.MemorySource
 import com.example.data.model.MilestoneCategory
 import com.example.data.model.MilestoneProgressStatus
@@ -38,6 +40,7 @@ class AbleysRepository(context: Context) {
     private val achievementDao = db.achievementDao()
     private val equipmentDao = db.equipmentDao()
     private val milestoneDao = db.milestoneDao()
+    private val moveProgramDao = db.moveProgramDao()
 
     val childProfileFlow: Flow<ChildProfile?> = childDao.getProfileFlow()
     val skillProgressFlow: Flow<List<SkillProgress>> = skillDao.getAllSkillProgressFlow()
@@ -306,6 +309,13 @@ class AbleysRepository(context: Context) {
     // Static Curated Move Activities (Page 10 & 11)
     /** 46 activities extracted from the Pediatric Therapy Activity Vault, each with its source page. */
     val curatedMoveActivities: List<MoveActivity> = AbleysContent.moveActivities
+
+    /** Multi-day challenges composed over the activity catalogue. */
+    val curatedMovePrograms: List<MoveProgram> = AbleysContent.movePrograms
+
+    val moveProgramProgressFlow: Flow<List<MoveProgramDayProgress>> = moveProgramDao.observeProgress()
+
+    fun activityById(id: String): MoveActivity? = curatedMoveActivities.firstOrNull { it.id == id }
     /** 25 home programmes extracted from the OT corpus, each carrying its source page. */
     val curatedTherapyPrograms: List<TherapyProgram> = AbleysContent.therapyPrograms
     private val scaffoldParentStories: List<ParentStory> = listOf(
@@ -512,6 +522,20 @@ class AbleysRepository(context: Context) {
                 photoUri = photoUri
             )
         )
+    }
+
+    suspend fun completeProgramDay(programId: String, dayNumber: Int) = withContext(Dispatchers.IO) {
+        Analytics.track(
+            Analytics.PROGRAM_DAY_COMPLETED,
+            mapOf("program_id" to programId, "day" to dayNumber)
+        )
+        moveProgramDao.markDayComplete(
+            MoveProgramDayProgress(programId = programId, dayNumber = dayNumber)
+        )
+    }
+
+    suspend fun resetProgram(programId: String) = withContext(Dispatchers.IO) {
+        moveProgramDao.resetProgram("child_default", programId)
     }
 
     suspend fun toggleEquipmentOwned(sku: String, owned: Boolean) = withContext(Dispatchers.IO) {

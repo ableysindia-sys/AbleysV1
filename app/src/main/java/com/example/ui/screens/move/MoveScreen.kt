@@ -68,6 +68,7 @@ import com.example.ui.theme.AbleyTeal
 import com.example.ui.theme.AbleyTealLight
 import com.example.ui.theme.DmSansFontFamily
 import com.example.ui.theme.PoppinsFontFamily
+import com.example.data.model.MoveProgram
 
 @Composable
 fun MoveScreen(
@@ -77,6 +78,9 @@ fun MoveScreen(
     equipmentList: List<EquipmentProduct> = emptyList(),
     onOpenShopItem: (String) -> Unit = {},
     onStartActivityNow: (MoveActivity) -> Unit = onSelectActivity,
+    programs: List<MoveProgram> = emptyList(),
+    programProgress: Map<String, Int> = emptyMap(),
+    onSelectProgram: (MoveProgram) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val childName = childProfile?.name ?: "Aarav"
@@ -244,6 +248,34 @@ fun MoveScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // Multi-day challenges. A programme is a commitment; a single activity is a five-minute
+        // decision. They do not belong in the same list, so challenges get their own rail above it.
+        if (programs.isNotEmpty()) {
+            item {
+                Column(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)) {
+                    Text(
+                        text = "PROGRAMS & CHALLENGES",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color.Black.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(programs, key = { it.id }) { program ->
+                            MoveProgramCard(
+                                program = program,
+                                daysComplete = programProgress[program.id] ?: 0,
+                                onClick = { onSelectProgram(program) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
                 }
             }
         }
@@ -651,5 +683,59 @@ fun MoveActivityCard(
                 }
             }
         }
+    }
+}
+
+/** Compact challenge card for the Move programmes rail. */
+@Composable
+private fun MoveProgramCard(
+    program: MoveProgram,
+    daysComplete: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val accent = Color(program.accentColorHex)
+    val started = daysComplete > 0
+    Column(
+        modifier = modifier
+            .width(210.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White)
+            .border(1.dp, AbleySand, RoundedCornerShape(18.dp))
+            .clickable { onClick() }
+            .padding(16.dp)
+            .testTag("move_program_card_${program.id}")
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(accent.copy(alpha = 0.12f))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = "${program.totalDays} DAYS",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                color = accent
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = program.title,
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            maxLines = 2
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = program.subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Black.copy(alpha = 0.55f),
+            maxLines = 2
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = if (started) "Day ${daysComplete + 1} next" else "Not started",
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = if (started) accent else Color.Black.copy(alpha = 0.45f)
+        )
     }
 }

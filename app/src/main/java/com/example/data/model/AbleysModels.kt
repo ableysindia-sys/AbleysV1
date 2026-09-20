@@ -76,6 +76,42 @@ data class MoveActivity(
     val sourceRef: String = ""
 )
 
+/** One day of a multi-day Move programme, pointing at an activity in the catalogue. */
+data class MoveProgramDay(
+    val dayNumber: Int,
+    val activityId: String,
+    val focusLabel: String
+)
+
+/**
+ * A multi-day Move container -- the spec's "Program or challenge" screen.
+ *
+ * Days reference activities by id rather than embedding them, so a programme is a running order
+ * over the reviewed catalogue and never a second copy of the content that could drift from it.
+ */
+data class MoveProgram(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val format: MoveFormat,
+    val totalDays: Int,
+    val description: String,
+    val days: List<MoveProgramDay>,
+    val accentColorHex: Long = 0xFFEE4A41
+)
+
+/**
+ * A completed day. Absent rows mean not yet done, so a family can pick a programme back up
+ * after a gap without the app deciding they failed it.
+ */
+@Entity(tableName = "move_program_progress", primaryKeys = ["childId", "programId", "dayNumber"])
+data class MoveProgramDayProgress(
+    val childId: String = "child_default",
+    val programId: String,
+    val dayNumber: Int,
+    val completedAt: Long = System.currentTimeMillis()
+)
+
 enum class MemoryType {
     PARENT_ADDED,
     SYSTEM_GENERATED

@@ -9,6 +9,7 @@ import com.example.data.model.Achievement
 import com.example.data.model.ChildProfile
 import com.example.data.model.EquipmentProduct
 import com.example.data.model.MemoryItem
+import com.example.data.model.MoveProgramDayProgress
 import com.example.data.model.SkillProgress
 import kotlinx.coroutines.flow.Flow
 
@@ -88,4 +89,16 @@ interface EquipmentDao {
 
     @Query("UPDATE equipment_items SET isOwned = :owned WHERE sku = :sku")
     suspend fun setOwned(sku: String, owned: Boolean)
+}
+
+@Dao
+interface MoveProgramDao {
+    @Query("SELECT * FROM move_program_progress WHERE childId = :childId")
+    fun observeProgress(childId: String = "child_default"): Flow<List<MoveProgramDayProgress>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun markDayComplete(progress: MoveProgramDayProgress)
+
+    @Query("DELETE FROM move_program_progress WHERE childId = :childId AND programId = :programId")
+    suspend fun resetProgram(childId: String, programId: String)
 }

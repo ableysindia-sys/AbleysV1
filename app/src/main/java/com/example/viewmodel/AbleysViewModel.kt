@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.data.model.MoveProgram
+import com.example.data.model.MoveProgramDayProgress
 
 enum class NavigationTab {
     GROW,
@@ -60,6 +62,27 @@ class AbleysViewModel(application: Application) : AndroidViewModel(application) 
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val moveActivities: List<MoveActivity> = repository.curatedMoveActivities
+    val movePrograms: List<MoveProgram> = repository.curatedMovePrograms
+
+    val moveProgramProgress: StateFlow<List<MoveProgramDayProgress>> =
+        repository.moveProgramProgressFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _selectedMoveProgram = MutableStateFlow<MoveProgram?>(null)
+    val selectedMoveProgram: StateFlow<MoveProgram?> = _selectedMoveProgram.asStateFlow()
+
+    fun selectMoveProgram(program: MoveProgram) { _selectedMoveProgram.value = program }
+
+    fun clearMoveProgram() { _selectedMoveProgram.value = null }
+
+    fun activityById(id: String): MoveActivity? = repository.activityById(id)
+
+    fun completeProgramDay(programId: String, dayNumber: Int) {
+        viewModelScope.launch { repository.completeProgramDay(programId, dayNumber) }
+    }
+
+    fun resetMoveProgram(programId: String) {
+        viewModelScope.launch { repository.resetProgram(programId) }
+    }
     val therapyPrograms: List<TherapyProgram> = repository.curatedTherapyPrograms
     val parentStories: List<ParentStory> = repository.curatedParentStories
 

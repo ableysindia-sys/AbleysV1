@@ -3,6 +3,8 @@ package com.example.data.content
 import com.example.data.model.EquipmentProduct
 import com.example.data.model.MoveActivity
 import com.example.data.model.MoveFormat
+import com.example.data.model.MoveProgram
+import com.example.data.model.MoveProgramDay
 import com.example.data.model.TherapyArea
 import com.example.data.model.TherapyProgram
 import com.example.data.model.TherapySessionStep
@@ -2724,6 +2726,105 @@ object AbleysContent {
             benefits = "Dual-Texture Sensory Lap Pad for Focus & Calm",
             priceString = "₹2,437",
             storeUrl = "https://ableys.in/products/weighted-lap-pad-for-focus-minky-dots"
+        )
+    )
+
+    /** Multi-day containers composed over the reviewed activity catalogue. */
+    val movePrograms: List<MoveProgram> = listOf(
+        MoveProgram(
+            id = "prog_7day_coordination",
+            title = "7-Day Coordination Challenge",
+            subtitle = "One activity a day, seven days",
+            format = MoveFormat.ONE_WEEK,
+            totalDays = 7,
+            description = "A week of balance, heavy work and looking-carefully activities, one a day. Built to be finished on an ordinary weekday evening.",
+            accentColorHex = 0xFFEE4A41,
+            days = listOf(
+                MoveProgramDay(dayNumber = 1, activityId = "bear_crawl_relay", focusLabel = "Movement & Energy"),
+                MoveProgramDay(dayNumber = 2, activityId = "carry_push_or_pull", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 3, activityId = "find_the_hidden_path", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 4, activityId = "step_over_step_in", focusLabel = "Movement & Energy"),
+                MoveProgramDay(dayNumber = 5, activityId = "core_up_and_reach", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 6, activityId = "opt_in_alert_circuit", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 7, activityId = "morning_meeting_role_play", focusLabel = "Playing With Others")
+            )
+        ),
+        MoveProgram(
+            id = "prog_7day_calm",
+            title = "7-Day Calm & Comfort Week",
+            subtitle = "Settling and regulation, one a day",
+            format = MoveFormat.ONE_WEEK,
+            totalDays = 7,
+            description = "Seven days of settling activities and heavy work, for families whose hardest part of the day is the wind-down.",
+            accentColorHex = 0xFF1F7A74,
+            days = listOf(
+                MoveProgramDay(dayNumber = 1, activityId = "calm_to_work_countdown", focusLabel = "Calm & Comfort"),
+                MoveProgramDay(dayNumber = 2, activityId = "carry_push_or_pull", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 3, activityId = "linear_rocking_rounds", focusLabel = "Calm & Comfort"),
+                MoveProgramDay(dayNumber = 4, activityId = "find_the_hidden_path", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 5, activityId = "sixty_second_bridge", focusLabel = "Calm & Comfort"),
+                MoveProgramDay(dayNumber = 6, activityId = "core_up_and_reach", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 7, activityId = "stabilize_and_land_finish", focusLabel = "Calm & Comfort")
+            )
+        ),
+        MoveProgram(
+            id = "prog_7day_hands",
+            title = "7-Day Hands & Fine Motor Week",
+            subtitle = "Pinch, grip and early handwriting",
+            format = MoveFormat.ONE_WEEK,
+            totalDays = 7,
+            description = "A week on the small muscles: pinch and grip strength, scissors and the shapes that come before letters.",
+            accentColorHex = 0xFF1F7A74,
+            days = listOf(
+                MoveProgramDay(dayNumber = 1, activityId = "grip_carry_place", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 2, activityId = "line_laps", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 3, activityId = "message_making", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 4, activityId = "pencil_hold_check", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 5, activityId = "pretend_tools_real_skills", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 6, activityId = "find_the_hidden_path", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 7, activityId = "first_bite_ladder", focusLabel = "Everyday Independence")
+            )
+        ),
+        MoveProgram(
+            id = "prog_30day_move_grow",
+            title = "30-Day Move & Grow",
+            subtitle = "A month across all seven areas",
+            format = MoveFormat.ONE_MONTH,
+            totalDays = 30,
+            description = "Thirty days that touch every area in turn, so a month of showing up covers the whole picture rather than the one thing that is easiest to practise.",
+            accentColorHex = 0xFFEE4A41,
+            days = listOf(
+                MoveProgramDay(dayNumber = 1, activityId = "bear_crawl_relay", focusLabel = "Movement & Energy"),
+                MoveProgramDay(dayNumber = 2, activityId = "carry_push_or_pull", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 3, activityId = "find_the_hidden_path", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 4, activityId = "grip_carry_place", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 5, activityId = "calm_to_work_countdown", focusLabel = "Calm & Comfort"),
+                MoveProgramDay(dayNumber = 6, activityId = "first_bite_ladder", focusLabel = "Everyday Independence"),
+                MoveProgramDay(dayNumber = 7, activityId = "morning_meeting_role_play", focusLabel = "Playing With Others"),
+                MoveProgramDay(dayNumber = 8, activityId = "step_over_step_in", focusLabel = "Movement & Energy"),
+                MoveProgramDay(dayNumber = 9, activityId = "core_up_and_reach", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 10, activityId = "opt_in_alert_circuit", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 11, activityId = "line_laps", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 12, activityId = "linear_rocking_rounds", focusLabel = "Calm & Comfort"),
+                MoveProgramDay(dayNumber = 13, activityId = "first_pull_dressing", focusLabel = "Everyday Independence"),
+                MoveProgramDay(dayNumber = 14, activityId = "one_prop_switch", focusLabel = "Playing With Others"),
+                MoveProgramDay(dayNumber = 15, activityId = "throw_catch_switch", focusLabel = "Movement & Energy"),
+                MoveProgramDay(dayNumber = 16, activityId = "deep_pressure_body_map", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 17, activityId = "rule_switch_sorting", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 18, activityId = "message_making", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 19, activityId = "sixty_second_bridge", focusLabel = "Calm & Comfort"),
+                MoveProgramDay(dayNumber = 20, activityId = "five_minute_daily_practice", focusLabel = "Everyday Independence"),
+                MoveProgramDay(dayNumber = 21, activityId = "pretend_play_ladder", focusLabel = "Playing With Others"),
+                MoveProgramDay(dayNumber = 22, activityId = "bear_crawl_relay", focusLabel = "Movement & Energy"),
+                MoveProgramDay(dayNumber = 23, activityId = "quiet_feet_beam_walk", focusLabel = "Strength & Body Awareness"),
+                MoveProgramDay(dayNumber = 24, activityId = "scanning_treasure_hunt", focusLabel = "Focus & Attention"),
+                MoveProgramDay(dayNumber = 25, activityId = "pencil_hold_check", focusLabel = "Hands & Fine Motor"),
+                MoveProgramDay(dayNumber = 26, activityId = "stabilize_and_land_finish", focusLabel = "Calm & Comfort"),
+                MoveProgramDay(dayNumber = 27, activityId = "handwashing_that_holds_up", focusLabel = "Everyday Independence"),
+                MoveProgramDay(dayNumber = 28, activityId = "shared_build", focusLabel = "Playing With Others"),
+                MoveProgramDay(dayNumber = 29, activityId = "bear_crawl_relay", focusLabel = "Movement & Energy"),
+                MoveProgramDay(dayNumber = 30, activityId = "carry_push_or_pull", focusLabel = "Strength & Body Awareness")
+            )
         )
     )
 }

@@ -11,6 +11,7 @@ import com.example.data.model.ChildProfile
 import com.example.data.model.EquipmentProduct
 import com.example.data.model.MemoryItem
 import com.example.data.model.MilestoneConverters
+import com.example.data.model.MoveProgramDayProgress
 import com.example.data.model.SkillProgress
 
 @Database(
@@ -20,9 +21,10 @@ import com.example.data.model.SkillProgress
         MemoryItem::class,
         Achievement::class,
         EquipmentProduct::class,
-        ChildDevelopmentMilestone::class
+        ChildDevelopmentMilestone::class,
+        MoveProgramDayProgress::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(MilestoneConverters::class)
@@ -33,6 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun achievementDao(): AchievementDao
     abstract fun equipmentDao(): EquipmentDao
     abstract fun milestoneDao(): MilestoneDao
+    abstract fun moveProgramDao(): MoveProgramDao
 
     companion object {
         @Volatile

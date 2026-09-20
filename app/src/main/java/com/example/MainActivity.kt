@@ -36,6 +36,7 @@ import com.example.ui.screens.milestones.MilestonesScreen
 import com.example.ui.screens.milestones.MilestonesTrackerSheet
 import com.example.ui.screens.move.ActivityDetailScreen
 import com.example.ui.screens.move.ActivityPlayerDialog
+import com.example.ui.screens.move.MoveProgramDetailScreen
 import com.example.ui.screens.move.MoveScreen
 import com.example.ui.screens.story.AddMomentDialog
 import com.example.ui.screens.story.StoryScreen
@@ -76,6 +77,8 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
     val activeGameSkill by viewModel.activeGameSkill.collectAsStateWithLifecycle()
 
     val selectedMoveActivity by viewModel.selectedMoveActivity.collectAsStateWithLifecycle()
+    val selectedMoveProgram by viewModel.selectedMoveProgram.collectAsStateWithLifecycle()
+    val moveProgramProgress by viewModel.moveProgramProgress.collectAsStateWithLifecycle()
     val activeMovePlayerActivity by viewModel.activeMovePlayerActivity.collectAsStateWithLifecycle()
 
     val selectedTherapyProgram by viewModel.selectedTherapyProgram.collectAsStateWithLifecycle()
@@ -118,6 +121,12 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
     BackHandler(enabled = milestonesTrackerOpen) {
         viewModel.closeMilestonesTracker()
     }
+
+    val programDayCounts = moveProgramProgress.groupingBy { it.programId }.eachCount()
+    val selectedProgramDays = moveProgramProgress
+        .filter { it.programId == selectedMoveProgram?.id }
+        .map { it.dayNumber }
+        .toSet()
 
     val childName = childProfile?.name ?: "Aarav"
     val showSupportTab = childProfile?.supportLayerEnabled ?: true
@@ -175,6 +184,20 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
                         onOpenShopItem = { viewModel.openContextualShopForSku(it) }
                     )
                 }
+                selectedMoveProgram != null -> {
+                    val program = selectedMoveProgram!!
+                    MoveProgramDetailScreen(
+                        program = program,
+                        activityForId = { viewModel.activityById(it) },
+                        completedDays = selectedProgramDays,
+                        onBack = { viewModel.clearMoveProgram() },
+                        onStartDay = { dayNumber, activity ->
+                            viewModel.completeProgramDay(program.id, dayNumber)
+                            viewModel.startMovePlayer(activity)
+                        },
+                        onResetProgram = { viewModel.resetMoveProgram(program.id) }
+                    )
+                }
                 selectedTherapyProgram != null -> {
                     TherapyProgramDetailScreen(
                         program = selectedTherapyProgram!!,
@@ -211,7 +234,10 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
                                 equipmentList = equipmentList,
                                 onSelectActivity = { viewModel.selectMoveActivity(it) },
                                 onOpenShopItem = { viewModel.openContextualShopForSku(it) },
-                                onStartActivityNow = { viewModel.startMovePlayer(it) }
+                                onStartActivityNow = { viewModel.startMovePlayer(it) },
+                                programs = viewModel.movePrograms,
+                                programProgress = programDayCounts,
+                                onSelectProgram = { viewModel.selectMoveProgram(it) }
                             )
                         }
                         NavigationTab.STORY -> {
