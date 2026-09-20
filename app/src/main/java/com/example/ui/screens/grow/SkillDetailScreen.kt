@@ -148,7 +148,7 @@ fun SkillDetailScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Skill → Level → Games → Mastery → Unlock",
+                            text = "Area → Sessions → Streak → Consistency",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = AbleyInk
@@ -336,12 +336,12 @@ fun SkillDetailScreen(
 
 private fun getLevelTitle(area: SkillArea, level: Int): String {
     return when (area) {
-        SkillArea.COMMUNICATION -> listOf("Choice Words", "Expressing Wants", "Responsive Turn-taking", "Two-way Dialogue", "Emotional Labeling", "Story Retelling", "Social Cues", "Complex Expression").getOrElse(level - 1) { "Communication Mastery" }
-        SkillArea.LITERACY -> listOf("Letter Shapes", "Sound Blends", "Word Rhymes", "Sight Vocabulary", "Sentence Matching", "Story Reading", "Punctuation Wonder", "Early Reader").getOrElse(level - 1) { "Literacy Mastery" }
-        SkillArea.NUMBERS -> listOf("Quantity Sense", "Counting to 5", "Stepping Stones 10", "Pattern Groups", "Leapfrog Addition", "Subitizing Shapes", "Ten-frame Puzzle", "Number Genius").getOrElse(level - 1) { "Numbers Mastery" }
-        SkillArea.THINKING -> listOf("Object Matching", "Color & Shape Sequences", "Spatial Mazes", "Cause & Effect", "Sorting Rules", "Problem Deduction", "Logic Bridges", "Deep Thinker").getOrElse(level - 1) { "Thinking Mastery" }
-        SkillArea.EMOTIONS -> listOf("Emotion Faces", "Body Clues", "Calm Breath Tools", "Empathy Moments", "Big Feelings Reset", "Sensory Check-in", "Perspective Taking", "Emotional Balance").getOrElse(level - 1) { "Emotions Mastery" }
-        SkillArea.CREATIVITY -> listOf("Color Play", "Rhythm Beats", "Open Blocks", "Visual Harmonies", "Melody Maker", "Story Painting", "Inventive Builder", "Master Artist").getOrElse(level - 1) { "Creativity Mastery" }
-        SkillArea.EVERYDAY_SKILLS -> listOf("Hand Washing", "Shoe & Socks Routine", "Teeth Brushing", "Morning Prep Strip", "Tidying Play Area", "Table Manners", "Safety Awareness", "Independent Star").getOrElse(level - 1) { "Everyday Mastery" }
+        SkillArea.PLAYING_WITH_OTHERS -> listOf("One-Prop Switch", "Pretend Play Ladder", "Shared Plane", "Three-Step Request", "Simon's Classroom", "Morning Meeting", "Tool Play", "Joining In").getOrElse(level - 1) { "Keeping It Up" }
+        SkillArea.HANDS_FINE_MOTOR -> listOf("Squeeze and Release", "Grasp Check", "Snip the Curve", "Zigzag Trails", "Line Laps", "Top-Down Tracing", "Message Making", "Grip, Carry, Place").getOrElse(level - 1) { "Keeping It Up" }
+        SkillArea.MOVEMENT_ENERGY -> listOf("Stepping Stones", "Quiet Feet", "Bear Crawl Relay", "Step Over, Step In", "Throw and Catch", "Push and Glide", "Core Up and Reach", "Moving Together").getOrElse(level - 1) { "Keeping It Up" }
+        SkillArea.FOCUS_ATTENTION -> listOf("Treasure Hunt", "Memory Snapshots", "Hidden Paths", "Watch and Respond", "Sequencing Slides", "Switchboard", "Try, Check, Adjust", "Steady Focus").getOrElse(level - 1) { "Keeping It Up" }
+        SkillArea.CALM_COMFORT -> listOf("Quiet Corner", "Slow Exhale", "Deep Pressure", "Calm Carry", "Heavy Work Reset", "Transition Bridge", "Sensory Check-in", "Settling Together").getOrElse(level - 1) { "Keeping It Up" }
+        SkillArea.STRENGTH_BODY_AWARENESS -> listOf("Wall Push", "Bear Drag", "Inchworm Ladder", "Weighted Carry", "Scooter Glide", "Heavy Work Circuit", "Body Boundaries", "Strong and Steady").getOrElse(level - 1) { "Keeping It Up" }
+        SkillArea.EVERYDAY_INDEPENDENCE -> listOf("Hand Washing", "Shoe & Socks Routine", "Teeth Brushing", "Morning Prep Strip", "Tidying Play Area", "Table Manners", "Safety Awareness", "Independent Star").getOrElse(level - 1) { "Keeping It Up" }
     }
 }

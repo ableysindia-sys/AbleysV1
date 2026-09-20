@@ -90,7 +90,7 @@ fun YearInGrowingDialog(
                 title = "MASTERY",
                 statNumber = "137",
                 statLabel = "skills mastered",
-                narrative = "From communication and phonics to bilateral balance steps.",
+                narrative = "From calm corners and steady hands to balance steps taken together.",
                 emoji = "⭐"
             ),
             YearStoryBeat(

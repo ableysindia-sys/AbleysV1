@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import com.example.analytics.Analytics
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -71,15 +72,15 @@ class AbleysRepository(context: Context) {
             )
 
             // Seed 7 Skill Areas matching Page 8 of spec:
-            // Communication Lv 4, Literacy Lv 3, Numbers Lv 5, Thinking Lv 2, Emotions Lv 3, Creativity Lv 4, Everyday Skills Lv 2
+            // Seeded consistency across the seven need areas
             val initialSkills = listOf(
-                SkillProgress(SkillArea.COMMUNICATION.id, currentLevel = 4, xpEarned = 280, gamesCompleted = 14),
-                SkillProgress(SkillArea.LITERACY.id, currentLevel = 3, xpEarned = 210, gamesCompleted = 10),
-                SkillProgress(SkillArea.NUMBERS.id, currentLevel = 5, xpEarned = 340, gamesCompleted = 18),
-                SkillProgress(SkillArea.THINKING.id, currentLevel = 2, xpEarned = 130, gamesCompleted = 6),
-                SkillProgress(SkillArea.EMOTIONS.id, currentLevel = 3, xpEarned = 190, gamesCompleted = 9),
-                SkillProgress(SkillArea.CREATIVITY.id, currentLevel = 4, xpEarned = 270, gamesCompleted = 13),
-                SkillProgress(SkillArea.EVERYDAY_SKILLS.id, currentLevel = 2, xpEarned = 120, gamesCompleted = 5)
+                SkillProgress(SkillArea.PLAYING_WITH_OTHERS.id, currentLevel = 4, xpEarned = 280, gamesCompleted = 14),
+                SkillProgress(SkillArea.HANDS_FINE_MOTOR.id, currentLevel = 3, xpEarned = 210, gamesCompleted = 10),
+                SkillProgress(SkillArea.MOVEMENT_ENERGY.id, currentLevel = 5, xpEarned = 340, gamesCompleted = 18),
+                SkillProgress(SkillArea.FOCUS_ATTENTION.id, currentLevel = 2, xpEarned = 130, gamesCompleted = 6),
+                SkillProgress(SkillArea.CALM_COMFORT.id, currentLevel = 3, xpEarned = 190, gamesCompleted = 9),
+                SkillProgress(SkillArea.STRENGTH_BODY_AWARENESS.id, currentLevel = 4, xpEarned = 270, gamesCompleted = 13),
+                SkillProgress(SkillArea.EVERYDAY_INDEPENDENCE.id, currentLevel = 2, xpEarned = 120, gamesCompleted = 5)
             )
             skillDao.insertAll(initialSkills)
 
@@ -104,8 +105,8 @@ class AbleysRepository(context: Context) {
                     iconEmoji = "🏅"
                 ),
                 MemoryItem(
-                    title = "Mastered 100 Words",
-                    caption = "Unlocked phonics and sight words milestone across literacy games.",
+                    title = "Steady Hands, Four Weeks Running",
+                    caption = "Eight fine-motor sessions finished this month, without missing a week.",
                     dateString = "September 10, 2026",
                     source = MemorySource.ABLEY_AUTO,
                     badgeTag = "Added by Abley's",
@@ -113,7 +114,7 @@ class AbleysRepository(context: Context) {
                     iconEmoji = "📚"
                 ),
                 MemoryItem(
-                    title = "Stepping Stone Balance Mastery",
+                    title = "Stepping Stone Balance, Four Days Running",
                     caption = "Navigated all six stepping stones across the living room without touching the floor.",
                     dateString = "September 4, 2026",
                     source = MemorySource.PARENT,
@@ -134,7 +135,7 @@ class AbleysRepository(context: Context) {
                 Achievement("100_skills", "100 Skills Mastered", "Mastered 100 developmental game goals", "100", true, 100, 100, "Earned Sep 10"),
                 Achievement("365_moments", "365 Moments", "Captured a memory for every day of the year", "365", false, 286, 365, null),
                 Achievement("little_adventurer", "Little Adventurer", "Tried all 6 Move activity formats", "🌐", true, 6, 6, "Earned Sep 12"),
-                Achievement("independent_me", "Independent Me", "Mastered Everyday Skills daily self-care routines", "⭐", true, 5, 5, "Earned Sep 16"),
+                Achievement("independent_me", "Independent Me", "Kept up the daily self-care routine for five days", "⭐", true, 5, 5, "Earned Sep 16"),
                 Achievement("movement_500", "Movement 500", "Logged 500 total minutes moving together", "500", false, 248, 500, null),
                 Achievement("one_year_growing", "One Year of Growing", "A full 365 days of growing together", "1Y", false, 184, 365, null)
             )
@@ -605,6 +606,11 @@ class AbleysRepository(context: Context) {
 
     // User Actions
     suspend fun logMoveActivityCompletion(activity: MoveActivity): String = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.MOVE_ACTIVITY_COMPLETED, mapOf(
+            "activity_id" to activity.id,
+            "target_area" to activity.targetArea,
+            "duration_minutes" to activity.durationMinutes
+        ))
         childDao.addXp("child_default", activity.xpReward)
         childDao.addMinutesMoved("child_default", activity.durationMinutes)
 
@@ -633,6 +639,12 @@ class AbleysRepository(context: Context) {
     }
 
     suspend fun logTherapySessionCompletion(program: TherapyProgram): String = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.THERAPY_SESSION_COMPLETED, mapOf(
+            "program_id" to program.id,
+            "week" to program.weekNumber,
+            "session" to program.sessionNumber,
+            "equipment_sku" to program.equipmentSku
+        ))
         val xpGain = 45
         childDao.addXp("child_default", xpGain)
         childDao.addMinutesMoved("child_default", program.totalMinutes)
@@ -655,6 +667,10 @@ class AbleysRepository(context: Context) {
     }
 
     suspend fun completeSkillGame(area: SkillArea, xpReward: Int = 25): String = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.SKILL_SESSION_COMPLETED, mapOf(
+            "area" to area.id,
+            "store_tag" to area.storeTag
+        ))
         skillDao.levelUpSkill(area.id, xpReward)
         childDao.addXp("child_default", xpReward)
 
@@ -682,6 +698,7 @@ class AbleysRepository(context: Context) {
     }
 
     suspend fun addParentMemory(title: String, caption: String, dateString: String, emoji: String = "✨") = withContext(Dispatchers.IO) {
+        Analytics.track(Analytics.MEMORY_CAPTURED, mapOf("source" to "parent"))
         memoryDao.insertMemory(
             MemoryItem(
                 title = title,

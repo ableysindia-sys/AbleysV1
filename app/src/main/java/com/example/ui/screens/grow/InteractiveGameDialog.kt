@@ -114,43 +114,43 @@ fun InteractiveGameDialog(
 
                 if (!gameCompleted) {
                     when (skillArea) {
-                        SkillArea.NUMBERS -> NumbersMiniGame(
+                        SkillArea.MOVEMENT_ENERGY -> NumbersMiniGame(
                             onSuccess = {
                                 selectedOption = it
                                 gameCompleted = true
                             }
                         )
-                        SkillArea.LITERACY -> LiteracyMiniGame(
+                        SkillArea.HANDS_FINE_MOTOR -> LiteracyMiniGame(
                             onSuccess = {
                                 selectedOption = it
                                 gameCompleted = true
                             }
                         )
-                        SkillArea.EMOTIONS -> EmotionsMiniGame(
+                        SkillArea.CALM_COMFORT -> EmotionsMiniGame(
                             onSuccess = {
                                 selectedOption = it
                                 gameCompleted = true
                             }
                         )
-                        SkillArea.COMMUNICATION -> CommunicationMiniGame(
+                        SkillArea.PLAYING_WITH_OTHERS -> CommunicationMiniGame(
                             onSuccess = {
                                 selectedOption = it
                                 gameCompleted = true
                             }
                         )
-                        SkillArea.THINKING -> ThinkingMiniGame(
+                        SkillArea.FOCUS_ATTENTION -> ThinkingMiniGame(
                             onSuccess = {
                                 selectedOption = it
                                 gameCompleted = true
                             }
                         )
-                        SkillArea.CREATIVITY -> CreativityMiniGame(
+                        SkillArea.STRENGTH_BODY_AWARENESS -> CreativityMiniGame(
                             onSuccess = {
                                 selectedOption = it
                                 gameCompleted = true
                             }
                         )
-                        SkillArea.EVERYDAY_SKILLS -> EverydaySkillsMiniGame(
+                        SkillArea.EVERYDAY_INDEPENDENCE -> EverydaySkillsMiniGame(
                             onSuccess = {
                                 selectedOption = it
                                 gameCompleted = true
@@ -191,7 +191,7 @@ fun InteractiveGameDialog(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Mastery logged for ${skillArea.displayName}.\nYou unlocked +25 XP and progressed towards the next badge!",
+                            text = "Session logged for ${skillArea.displayName}.\nThat is another day on the streak, and +25 XP towards the next badge.",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = AbleyInk.copy(alpha = 0.7f),
                                 textAlign = TextAlign.Center

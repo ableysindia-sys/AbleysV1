@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import android.content.Intent
+import com.example.analytics.Analytics
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -217,6 +218,10 @@ fun ContextualShopDialog(
                 // Action button: View on Ableys.in store
                 Button(
                     onClick = {
+                        Analytics.track(Analytics.SHOP_TAP, mapOf(
+                            "sku" to product.sku,
+                            "store_url" to product.storeUrl
+                        ))
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(product.storeUrl))
                         context.startActivity(intent)
                     },

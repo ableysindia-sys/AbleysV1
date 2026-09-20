@@ -23,15 +23,17 @@ enum class SkillArea(
     val id: String,
     val displayName: String,
     val shortDescription: String,
-    val iconName: String
+    val iconName: String,
+    // Maps to the live ableys.in catalogue tag so equipment and collections join on data, not by hand.
+    val storeTag: String
 ) {
-    COMMUNICATION("communication", "Communication", "Verbal, expression & responsive dialogue", "chat"),
-    LITERACY("literacy", "Literacy", "Phonics, letter recognition & sight words", "book"),
-    NUMBERS("numbers", "Numbers", "Counting, quantities, shapes & simple addition", "pin"),
-    THINKING("thinking", "Thinking", "Pattern recognition, sequence & logic solving", "lightbulb"),
-    EMOTIONS("emotions", "Emotions", "Emotional naming, self-regulation & empathy", "heart"),
-    CREATIVITY("creativity", "Creativity", "Visual arts, melody rhythms & open building", "palette"),
-    EVERYDAY_SKILLS("everyday_skills", "Everyday Skills", "Self-care routines, safety & independence", "home")
+    CALM_COMFORT("calm_comfort", "Calm & Comfort", "Settling, regulation and recovering from big feelings", "heart", "need:calming-comfort"),
+    FOCUS_ATTENTION("focus_attention", "Focus & Attention", "Looking carefully, remembering and staying with a task", "lightbulb", "need:focus-attention"),
+    MOVEMENT_ENERGY("movement_energy", "Movement & Energy", "Balance, coordination and burning off restless energy", "run", "need:movement-energy"),
+    STRENGTH_BODY_AWARENESS("strength_body_awareness", "Strength & Body Awareness", "Core strength, heavy work and knowing where the body is", "muscle", "need:strength-body-awareness"),
+    HANDS_FINE_MOTOR("hands_fine_motor", "Hands & Fine Motor", "Pinch and grip strength, scissors and early handwriting", "hand", "product:fine-motor"),
+    EVERYDAY_INDEPENDENCE("everyday_independence", "Everyday Independence", "Dressing, mealtimes, hygiene and daily routines", "home", "need:independence-life-skills"),
+    PLAYING_WITH_OTHERS("playing_with_others", "Playing With Others", "Turn-taking, shared play and joining in", "chat", "need:social-play")
 }
 
 @Entity(tableName = "skill_progress")
