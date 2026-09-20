@@ -85,11 +85,16 @@ fun StoryScreen(
 ) {
     val childName = childProfile?.name ?: "Aarav"
     var selectedFilter by remember { mutableStateOf("All Feed") }
+    // Timeline / Months / Year -- the three Memories surfaces the spec names.
+    var viewMode by remember { mutableStateOf(StoryViewMode.TIMELINE) }
 
     // Sort memories chronologically (most recent first)
     val chronologicalMemories = remember(memories) {
         memories.sortedByDescending { it.timestamp }
     }
+
+    val monthPeriods = remember(chronologicalMemories) { groupIntoMonths(chronologicalMemories) }
+    val yearPeriods = remember(chronologicalMemories) { groupIntoYears(chronologicalMemories) }
 
     val filteredMemories = remember(selectedFilter, chronologicalMemories) {
         when (selectedFilter) {
@@ -296,8 +301,57 @@ fun StoryScreen(
                 }
             }
 
-            // Timeline Feed Section Header
             item {
+                StoryViewModeSelector(
+                    selected = viewMode,
+                    onSelect = { viewMode = it }
+                )
+            }
+
+            if (viewMode != StoryViewMode.TIMELINE) {
+                item {
+                    if (viewMode == StoryViewMode.MONTHS) {
+                        MemoryMonthView(
+                            periods = monthPeriods,
+                            onSharePeriod = { period ->
+                                onShareMemory(
+                                    ShareCardData(
+                                        title = period.label.uppercase(),
+                                        bigNumber = "${period.memories.size}",
+                                        unitLabel = "MOMENTS CAPTURED",
+                                        statsSubtitle = "${period.photoCount} photos \u00b7 " +
+                                            "${period.autoCount} added by Abley's",
+                                        childName = childName,
+                                        ageOrYear = period.year.toString(),
+                                        theme = ShareCardTheme.CORAL_PRIDE
+                                    )
+                                )
+                            }
+                        )
+                    } else {
+                        MemoryYearView(
+                            periods = yearPeriods,
+                            onSharePeriod = { period ->
+                                onShareMemory(
+                                    ShareCardData(
+                                        title = "YEAR IN GROWING",
+                                        bigNumber = "${period.memories.size}",
+                                        unitLabel = "MOMENTS",
+                                        statsSubtitle = "${period.photoCount} photos \u00b7 " +
+                                            "${period.parentCount} captured by you",
+                                        childName = childName,
+                                        ageOrYear = period.year.toString(),
+                                        theme = ShareCardTheme.SAND_EDITORIAL
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Timeline Feed Section Header
+            if (viewMode == StoryViewMode.TIMELINE) item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -321,7 +375,10 @@ fun StoryScreen(
             }
 
             // Chronological Items Feed
-            items(filteredMemories, key = { it.id }) { memory ->
+            items(
+                if (viewMode == StoryViewMode.TIMELINE) filteredMemories else emptyList(),
+                key = { it.id }
+            ) { memory ->
                 if (memory.type == MemoryType.SYSTEM_GENERATED) {
                     MilestoneFeedCard(
                         memory = memory,
@@ -802,6 +859,52 @@ fun PhotoMemoryFeedCard(
                         color = AbleyInk
                     )
                 }
+            }
+        }
+    }
+}
+
+/** The three Memories surfaces named in the spec. */
+enum class StoryViewMode(val label: String) {
+    TIMELINE("Timeline"),
+    MONTHS("Months"),
+    YEAR("Year")
+}
+
+@Composable
+private fun StoryViewModeSelector(
+    selected: StoryViewMode,
+    onSelect: (StoryViewMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(AbleySand.copy(alpha = 0.45f))
+            .padding(4.dp)
+            .testTag("story_view_mode_selector"),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        StoryViewMode.entries.forEach { mode ->
+            val isSelected = mode == selected
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(if (isSelected) Color.White else Color.Transparent)
+                    .clickable { onSelect(mode) }
+                    .padding(vertical = 9.dp)
+                    .testTag("story_mode_${mode.name.lowercase()}"),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = mode.label,
+                    fontFamily = DmSansFontFamily,
+                    fontSize = 12.sp,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isSelected) AbleyInk else AbleyInk.copy(alpha = 0.55f)
+                )
             }
         }
     }
