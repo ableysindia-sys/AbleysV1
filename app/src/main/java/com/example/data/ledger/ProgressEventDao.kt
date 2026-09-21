@@ -51,7 +51,7 @@ interface ProgressEventDao {
     )
     suspend fun countFor(childId: String, type: String, subjectId: String): Int
 
-    @Query("SELECT COUNT(DISTINCT date(occurredAt / 1000, 'unixepoch')) FROM progress_events WHERE childId = :childId")
+    @Query("SELECT COUNT(DISTINCT localDay) FROM progress_events WHERE childId = :childId")
     suspend fun activeDays(childId: String): Int
 
     @Query("SELECT * FROM progress_events WHERE childId = :childId ORDER BY sequence")

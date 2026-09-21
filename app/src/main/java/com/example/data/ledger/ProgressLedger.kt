@@ -51,7 +51,8 @@ class ProgressLedger(
                 subjectId = subjectId,
                 xpEarned = xpEarned,
                 minutesMoved = minutesMoved,
-                occurredAt = occurredAt
+                occurredAt = occurredAt,
+                localDay = ProgressEvent.localDayOf(occurredAt)
             ).also { events.append(it) }
         }
         project(childId)

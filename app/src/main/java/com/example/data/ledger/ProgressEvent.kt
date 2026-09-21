@@ -43,10 +43,28 @@ data class ProgressEvent(
     val minutesMoved: Int = 0,
     /** Device wall clock. Recorded for display, never for ordering or arithmetic. */
     val occurredAt: Long = System.currentTimeMillis(),
+    /**
+     * The calendar day this happened, in the family's own timezone, as YYYY-MM-DD.
+     *
+     * Derived from [occurredAt] at write time rather than in SQL. Counting distinct days with
+     * date(occurredAt/1000,'unixepoch') counts UTC days, so in IST every session between
+     * midnight and 05:30 lands on the previous day and a family that moves at 1am and again at
+     * 10pm is credited with two active days. Passing a fixed offset into the query instead only
+     * moves the bug: it ignores DST and it re-labels history whenever the device changes zone.
+     * The day a thing happened on is a fact about that moment, so it is recorded then.
+     */
+    val localDay: String = defaultLocalDay(),
     /** pending | synced */
     val syncStatus: String = PENDING
 ) {
     companion object {
+        /** YYYY-MM-DD in the device's current zone. */
+        fun localDayOf(epochMillis: Long): String =
+            java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                .format(java.util.Date(epochMillis))
+
+        private fun defaultLocalDay(): String = localDayOf(System.currentTimeMillis())
+
         const val PENDING = "pending"
         const val SYNCED = "synced"
 
