@@ -60,10 +60,22 @@ jobs:
       # Uploading both files together is a race: between the pointer landing and the bundle
       # landing, every device that polls gets a 404 on a bundle that latest.json promises exists.
       # Immutable caching makes it worse, because some edges will cache that 404.
+      - name: Resolve the bucket name
+        id: bucket
+        env:
+          RAW: ${{ secrets.CONTENT_BUCKET }}
+        run: |
+          # Accept "ableys-content-prod", "s3://ableys-content-prod" or a trailing slash. The
+          # natural way to fill this secret in is to paste the URI, and a doubled scheme fails
+          # at the least helpful possible moment.
+          NAME="${RAW#s3://}"; NAME="${NAME#gs://}"; NAME="${NAME%/}"
+          [[ -n "$NAME" ]] || { echo "CONTENT_BUCKET is empty" >&2; exit 1; }
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
       - name: Upload the bundle
         if: ${{ !inputs.rollback_bundle }}
         run: |
-          aws s3 cp dist/content_v*.json "s3://${{ secrets.CONTENT_BUCKET }}/app-content/" \
+          aws s3 cp dist/content_v*.json "s3://${{ steps.bucket.outputs.name }}/app-content/" \
             --cache-control "public, max-age=31536000, immutable" \
             --content-type "application/json"
 
@@ -87,7 +99,7 @@ jobs:
       # edge is an hour where a correction to clinical content does not exist.
       - name: Upload the pointer
         run: |
-          aws s3 cp dist/latest.json "s3://${{ secrets.CONTENT_BUCKET }}/app-content/latest.json" \
+          aws s3 cp dist/latest.json "s3://${{ steps.bucket.outputs.name }}/app-content/latest.json" \
             --cache-control "public, max-age=0, must-revalidate" \
             --content-type "application/json"
 

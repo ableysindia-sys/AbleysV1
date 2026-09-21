@@ -112,6 +112,41 @@ class PublishPointerTest {
     }
 
     @Test
+    fun theBucketSecretToleratesAUriRatherThanABareName() {
+        val text = workflow.readText()
+        assertTrue(
+            "The natural way to fill CONTENT_BUCKET in is to paste an s3:// URI; the workflow " +
+                "must strip it rather than build s3://s3://",
+            text.contains("NAME=\"\${RAW#s3://}\"")
+        )
+    }
+
+    @Test
+    fun theProvisioningRunbookExistsAndCoversTheJsonCachingTrap() {
+        val runbook = File("../tools/CONTENT_PIPELINE.md")
+        assertTrue("provisioning runbook is missing", runbook.exists())
+        val text = runbook.readText()
+        assertTrue(
+            "The runbook must cover that Cloudflare does not cache JSON by default -- without " +
+                "a cache rule the immutable bundle is fetched from origin every time",
+            text.contains("does not cache JSON by default")
+        )
+        assertTrue("runbook should explain the rollback direction", text.contains("new version"))
+        assertTrue("runbook should list every secret the workflow reads", 
+            listOf("CONTENT_BUCKET", "CONTENT_PUBLISH_ROLE", "CF_ZONE_ID", "CF_API_TOKEN")
+                .all { text.contains(it) })
+    }
+
+    @Test
+    fun everySecretTheWorkflowReadsIsDocumented() {
+        val used = Regex("secrets\\.([A-Z_]+)").findAll(workflow.readText())
+            .map { it.groupValues[1] }.toSet()
+        val runbook = File("../tools/CONTENT_PIPELINE.md").readText()
+        val undocumented = used.filter { !runbook.contains(it) }
+        assertTrue("Secrets used but not documented: $undocumented", undocumented.isEmpty())
+    }
+
+    @Test
     fun cachingHeadersMatchTheDesign() {
         val text = workflow.readText()
         assertTrue(
