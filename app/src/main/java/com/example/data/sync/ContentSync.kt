@@ -57,7 +57,10 @@ class ContentSync(
     private val prefs: SharedPreferences
         get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    suspend fun sync(store: ContentStore = ContentStore(context)): Result =
+    suspend fun sync(
+        store: ContentStore = ContentStore(context),
+        inFlight: ContentStore.InFlight = ContentStore.InFlight(emptySet())
+    ): Result =
         withContext(Dispatchers.IO) {
             val pointer = fetchPointer() ?: return@withContext Result.UpToDate
             val currentVersion = store.currentVersion()
@@ -71,7 +74,7 @@ class ContentSync(
                 return@withContext Result.Unavailable("bundle download failed")
             }
 
-            val problems = store.promote(temp, pointer.version)
+            val problems = store.promote(temp, pointer.version, inFlight)
             if (problems.isEmpty()) {
                 Analytics.track(
                     Analytics.CONTENT_UPDATED,

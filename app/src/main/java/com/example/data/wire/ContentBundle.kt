@@ -91,13 +91,36 @@ data class WireStep(
  */
 @JsonClass(generateAdapter = true)
 data class WireDemonstration(
-    /** none | video | lottie */
+    /**
+     * none | video | hls | lottie
+     *
+     * "video" is a single progressive file and is the right default for these. The primary path
+     * is a clip already on disk, downloaded on wifi ahead of the session, so adaptive bitrate is
+     * solving a problem the design has already removed -- and for a fifteen-second demonstration
+     * a manifest plus segment requests costs more round trips than it saves. "hls" exists for
+     * the content where it genuinely pays: anything long enough that a family would start
+     * watching before it finished downloading.
+     */
     val kind: String = "none",
     val url: String? = null,
     val posterUrl: String? = null,
     val loop: Boolean = true,
+    /**
+     * Alternative encodings, smallest first. Pre-caching picks one by device and connection
+     * rather than downloading every rendition, which is the cost adaptive streaming would
+     * otherwise impose on a pass whose whole point is to happen once on wifi.
+     */
+    val renditions: List<WireRendition> = emptyList(),
     /** Per-language voiceover tracks, keyed by BCP-47 tag. */
     val voiceoverUrls: Map<String, String> = emptyMap()
+)
+
+/** One encoding of a demonstration. */
+@JsonClass(generateAdapter = true)
+data class WireRendition(
+    val url: String,
+    val heightPx: Int,
+    val bytes: Long
 )
 
 /**

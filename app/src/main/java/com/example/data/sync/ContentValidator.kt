@@ -2,6 +2,7 @@ package com.example.data.sync
 
 import com.example.data.content.PhysicalCues
 import com.example.data.wire.ContentBundle
+import com.example.data.wire.WireReview
 
 /**
  * The contract a downloaded bundle must satisfy before it is allowed to replace a trusted one.
@@ -26,6 +27,40 @@ object ContentValidator {
         val complete: Boolean get() = translated >= total
     }
 
+    /** Disciplines a reviewer may sign off as. Anything else is a typo or a made-up role. */
+    private val disciplines = setOf(
+        "occupational_therapy", "psychology", "sleep", "speech_language", "parenting"
+    )
+
+    /**
+     * Content claiming approval must name who approved it and when.
+     *
+     * This is the client half of the sign-off gate. A CMS can enforce its own workflow, but what
+     * reaches a family is whatever the pipeline emitted, and "approved" with no reviewer behind
+     * it is the single claim in this app that must never be takeable on trust. A programme that
+     * says a professional reviewed it, with nothing recording which professional, is worse than
+     * one that admits it is a draft.
+     */
+    private fun checkReview(review: WireReview, owner: String, problems: MutableList<String>) {
+        if (review.discipline !in disciplines) {
+            problems += "$owner: unknown review discipline '${review.discipline}'"
+        }
+        if (review.state !in setOf("draft", "in_review", "approved")) {
+            problems += "$owner: unknown review state '${review.state}'"
+        }
+        if (review.state == "approved") {
+            if (review.reviewerName.isNullOrBlank()) {
+                problems += "$owner: claims approval with no reviewer recorded"
+            }
+            if (review.reviewedAt.isNullOrBlank()) {
+                problems += "$owner: claims approval with no sign-off date"
+            }
+            if (review.sourceRef.isNullOrBlank()) {
+                problems += "$owner: approved with no source reference to review against"
+            }
+        }
+    }
+
     fun check(bundle: ContentBundle): List<String> {
         val problems = mutableListOf<String>()
 
@@ -46,6 +81,7 @@ object ContentValidator {
         }
 
         bundle.activities.forEach { activity ->
+            checkReview(activity.review, activity.id, problems)
             requireKey(activity.titleKey, activity.id, "title")
             requireKey(activity.descriptionKey, activity.id, "description")
             if (activity.durationSeconds <= 0) problems += "${activity.id}: non-positive duration"
@@ -59,6 +95,7 @@ object ContentValidator {
         }
 
         bundle.programs.forEach { program ->
+            checkReview(program.review, program.id, problems)
             requireKey(program.titleKey, program.id, "title")
             if (program.sessions.isEmpty()) problems += "${program.id}: programme has no sessions"
 
@@ -89,7 +126,7 @@ object ContentValidator {
                     if (demo.kind != "none" && demo.url.isNullOrBlank()) {
                         problems += "${step.id}: demonstration declared '${demo.kind}' with no url"
                     }
-                    if (demo.kind !in setOf("none", "video", "lottie")) {
+                    if (demo.kind !in setOf("none", "video", "hls", "lottie")) {
                         problems += "${step.id}: unknown demonstration kind '${demo.kind}'"
                     }
                 }
@@ -98,6 +135,20 @@ object ContentValidator {
 
         return problems
     }
+
+    /**
+     * Every id this bundle publishes, for the stability check on rotation.
+     *
+     * A family part-way through a four-week programme has progress rows pointing at these. If a
+     * republish drops one, their progress silently references content that no longer exists, and
+     * the failure shows up as a screen that will not open rather than as anything anybody can
+     * diagnose.
+     */
+    fun publishedIds(bundle: ContentBundle): Set<String> =
+        bundle.activities.map { it.id }.toSet() +
+            bundle.programs.map { it.id } +
+            bundle.programs.flatMap { p -> p.sessions.map { it.id } } +
+            bundle.programs.flatMap { p -> p.sessions.flatMap { s -> s.steps.map { it.id } } }
 
     /** Per-language translation coverage. Reported, never enforced. */
     fun coverage(bundle: ContentBundle): List<Coverage> {
@@ -121,7 +172,9 @@ object ContentValidator {
             .flatMap { it.steps }
             .flatMap { step ->
                 val demo = step.demonstration
-                listOfNotNull(demo.url, demo.posterUrl) + demo.voiceoverUrls.values
+                listOfNotNull(demo.url, demo.posterUrl) +
+                    demo.renditions.map { it.url } +
+                    demo.voiceoverUrls.values
             }
             .filter { it.isNotBlank() }
             .distinct()

@@ -66,7 +66,19 @@ class ContentStore(private val context: Context) {
      * the app -- it keeps what it has -- but it is an error state for whoever published, so the
      * reasons are returned rather than swallowed.
      */
-    fun promote(incoming: File, declaredVersion: Int): List<String> {
+    /**
+     * Ids the device has progress against, gathered before a rotation.
+     *
+     * Passed in rather than read here so the store stays free of the database, and so a caller
+     * that knows about a kind of progress this class does not can still protect it.
+     */
+    data class InFlight(val ids: Set<String>)
+
+    fun promote(
+        incoming: File,
+        declaredVersion: Int,
+        inFlight: InFlight = InFlight(emptySet())
+    ): List<String> {
         if (!incoming.exists()) return listOf("incoming bundle missing")
 
         val raw = runCatching { adapter.fromJson(incoming.readText()) }.getOrNull()
@@ -81,7 +93,23 @@ class ContentStore(private val context: Context) {
         // is self-describing from that moment on.
         val parsed = raw.copy(version = declaredVersion)
 
-        val problems = ContentValidator.check(parsed)
+        val problems = ContentValidator.check(parsed).toMutableList()
+
+        // Identity stability. A family part-way through a four-week programme holds progress
+        // rows pointing at ids in the bundle they started on. A republish that drops one leaves
+        // those rows referencing content that no longer exists, and it surfaces as a screen that
+        // will not open rather than as anything anybody can diagnose. A reviewer correcting a
+        // safety boundary must produce a new version of a session, never make the old one
+        // vanish under somebody mid-programme.
+        if (inFlight.ids.isNotEmpty()) {
+            val published = ContentValidator.publishedIds(parsed)
+            val vanished = inFlight.ids - published
+            if (vanished.isNotEmpty()) {
+                problems += "removes ${vanished.size} id(s) this device has progress against: " +
+                    vanished.sorted().take(5).joinToString()
+            }
+        }
+
         if (problems.isNotEmpty()) {
             incoming.delete()
             return problems

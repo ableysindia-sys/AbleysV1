@@ -8,6 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.example.data.local.AppDatabase
 import java.util.concurrent.TimeUnit
 
 /**
@@ -27,7 +28,13 @@ class ContentSyncWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val result = ContentSync(applicationContext).sync()
+        // Read what the family is part-way through right now, so a rotation cannot drop content
+        // out from under them.
+        val inFlight = runCatching {
+            InFlightProgress.collect(AppDatabase.getDatabase(applicationContext))
+        }.getOrElse { ContentStore.InFlight(emptySet()) }
+
+        val result = ContentSync(applicationContext).sync(inFlight = inFlight)
         return when (result) {
             is ContentSync.Result.Unavailable -> Result.retry()
             // A rejected bundle is not retried: it will be equally invalid next time, and the
