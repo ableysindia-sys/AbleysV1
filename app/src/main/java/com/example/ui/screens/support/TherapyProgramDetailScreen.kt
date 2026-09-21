@@ -51,6 +51,10 @@ import com.example.ui.theme.AbleyIvory
 import com.example.ui.theme.AbleySand
 import com.example.ui.theme.AbleyTeal
 import com.example.ui.components.HouseholdAlternativeCard
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun TherapyProgramDetailScreen(
@@ -65,6 +69,7 @@ fun TherapyProgramDetailScreen(
     val equipmentItem = program.equipmentSku?.let { sku ->
         equipmentList.firstOrNull { it.sku == sku }
     }
+    var safetyAcknowledged by remember { mutableStateOf(false) }
     val hasEquipment = equipmentItem?.isOwned ?: false
 
     Scaffold(
@@ -296,6 +301,13 @@ fun TherapyProgramDetailScreen(
                             letterSpacing = 1.sp
                         ),
                         modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    SafetyGate(
+                        program = program,
+                        acknowledged = safetyAcknowledged,
+                        onAcknowledge = { safetyAcknowledged = true },
+                        modifier = Modifier.padding(bottom = 14.dp)
                     )
 
                     program.householdAlternative?.let { alternative ->

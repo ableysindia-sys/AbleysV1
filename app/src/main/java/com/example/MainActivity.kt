@@ -49,6 +49,9 @@ import com.example.ui.theme.AbleyIvory
 import com.example.ui.theme.AbleysTheme
 import com.example.viewmodel.AbleysViewModel
 import com.example.viewmodel.NavigationTab
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.ui.screens.support.CaregiverSessionPlayer
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -334,12 +337,16 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
     }
 
     activeTherapyPlayerProgram?.let { program ->
-        TherapySessionPlayerDialog(
-            program = program,
-            childName = childName,
-            onDismiss = { viewModel.closeTherapyPlayer() },
-            onCompleteSession = { viewModel.completeTherapySession(program) }
-        )
+        Dialog(
+            onDismissRequest = { viewModel.closeTherapyPlayer() },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            CaregiverSessionPlayer(
+                program = program,
+                onDismiss = { viewModel.closeTherapyPlayer() },
+                onComplete = { viewModel.completeTherapySession(program) }
+            )
+        }
     }
 
     selectedParentStory?.let { story ->
