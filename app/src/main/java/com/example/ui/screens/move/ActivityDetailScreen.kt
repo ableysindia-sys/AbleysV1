@@ -32,6 +32,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.ui.components.EquipmentCheckSheet
 import androidx.compose.ui.unit.sp
 import com.example.data.model.EquipmentProduct
 import com.example.data.model.MoveActivity
@@ -61,12 +66,34 @@ fun ActivityDetailScreen(
     onBack: () -> Unit,
     onStartActivity: () -> Unit,
     onOpenShopItem: (String) -> Unit,
+    onDeclareEquipment: (sku: String, owned: Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val equipmentItem = activity.equipmentSku?.let { sku ->
         equipmentList.firstOrNull { it.sku == sku }
     }
     val hasEquipment = equipmentItem?.isOwned ?: false
+
+    // Asked at the moment the answer matters, rather than as a catalogue checklist during
+    // onboarding. Once answered it is never asked again, for any activity needing this item.
+    var equipmentAsked by rememberSaveable(activity.id) { mutableStateOf(false) }
+    val needsEquipmentAnswer = equipmentItem != null &&
+        !equipmentItem.ownershipDeclared &&
+        !equipmentAsked
+
+    if (needsEquipmentAnswer && equipmentItem != null) {
+        EquipmentCheckSheet(
+            equipmentName = activity.equipmentName ?: equipmentItem.name,
+            householdAlternative = activity.householdAlternative,
+            onAnswer = { owned ->
+                equipmentAsked = true
+                onDeclareEquipment(equipmentItem.sku, owned)
+            },
+            // Dismissing answers nothing, and asking again next time is the honest behaviour:
+            // a parent who swiped it away has not told us they do not own the thing.
+            onDismiss = { equipmentAsked = true }
+        )
+    }
 
     Scaffold(
         containerColor = AbleyIvory,

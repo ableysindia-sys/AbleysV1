@@ -27,7 +27,7 @@ import com.example.data.model.SkillProgress
         MoveProgramDayProgress::class,
         ProgressEvent::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(MilestoneConverters::class)

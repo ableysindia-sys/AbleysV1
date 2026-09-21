@@ -245,7 +245,10 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
                         equipmentList = equipmentList,
                         onBack = { viewModel.closeMoveActivityDetail() },
                         onStartActivity = { viewModel.startMovePlayer(selectedMoveActivity!!) },
-                        onOpenShopItem = { viewModel.openContextualShopForSku(it) }
+                        onOpenShopItem = { viewModel.openContextualShopForSku(it) },
+                        onDeclareEquipment = { sku, owned ->
+                            viewModel.toggleEquipmentOwned(sku, owned)
+                        }
                     )
                 }
                 selectedMoveProgram != null -> {

@@ -357,7 +357,16 @@ data class EquipmentProduct(
     val benefits: String,
     val isOwned: Boolean = false,
     val priceString: String = "$34.00",
-    val storeUrl: String = "https://ableys.in/store"
+    val storeUrl: String = "https://ableys.in/store",
+    /**
+     * Whether anyone has actually been asked about this item.
+     *
+     * Without it, isOwned = false means both "we don't have it" and "nobody ever asked", so the
+     * app cannot tell a family who declined from one it has never spoken to -- and would either
+     * nag the first forever or never ask the second. Appended last so the positional constructor
+     * calls in the seed data keep compiling.
+     */
+    val ownershipDeclared: Boolean = false
 )
 
 enum class ShareCardTheme {

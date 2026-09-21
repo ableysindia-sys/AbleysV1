@@ -123,7 +123,7 @@ interface EquipmentDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<EquipmentProduct>)
 
-    @Query("UPDATE equipment_items SET isOwned = :owned WHERE sku = :sku")
+    @Query("UPDATE equipment_items SET isOwned = :owned, ownershipDeclared = 1 WHERE sku = :sku")
     suspend fun setOwned(sku: String, owned: Boolean)
 }
 
