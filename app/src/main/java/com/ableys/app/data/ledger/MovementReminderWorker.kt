@@ -16,6 +16,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.ableys.app.R
 import com.ableys.app.data.local.AppDatabase
+import com.ableys.app.data.settings.CaregiverPreferences
 import java.util.concurrent.TimeUnit
 
 /**
@@ -37,9 +38,17 @@ class MovementReminderWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        if (!CaregiverPreferences.remindersEnabled(applicationContext)) return Result.success()
+
         val db = AppDatabase.getDatabase(applicationContext)
         val child = db.childProfileDao().getActiveProfile() ?: return Result.success()
         val movementDays = db.progressEventDao().movementDays(child.id)
+
+        // Never nag a family who has not started. A reminder to someone who installed the app
+        // this morning and has not opened an activity is pure noise, and it is the first
+        // impression they get of what this app will be like to live with.
+        if (movementDays.isEmpty()) return Result.success()
+
         val today = ProgressEvent.localDayOf(System.currentTimeMillis())
 
         // The check. Already moved today means there is nothing to ask for.
@@ -92,14 +101,45 @@ class MovementReminderWorker(
             else -> "A short movement break today keeps $childName's run going."
         }
 
+        /**
+         * Daily, aimed at the caregiver's chosen hour.
+         *
+         * A bare periodic request fires relative to when it was enqueued, which for an app first
+         * opened at 2am means a 2am reminder forever. The initial delay puts the first run at the
+         * next occurrence of the chosen hour and the daily period keeps it there.
+         *
+         * REPLACE rather than KEEP, because this is also how a changed hour takes effect.
+         */
         fun schedule(context: Context) {
+            val manager = WorkManager.getInstance(context)
+            if (!CaregiverPreferences.remindersEnabled(context)) {
+                manager.cancelUniqueWork(REMINDER_WORK)
+                return
+            }
             val request = PeriodicWorkRequestBuilder<MovementReminderWorker>(1, TimeUnit.DAYS)
+                .setInitialDelay(
+                    millisUntilHour(CaregiverPreferences.reminderHour(context)),
+                    TimeUnit.MILLISECONDS
+                )
                 .build()
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            manager.enqueueUniquePeriodicWork(
                 REMINDER_WORK,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 request
             )
+        }
+
+        /** Milliseconds from [now] until the next time the local clock reads [hour]:00. */
+        fun millisUntilHour(hour: Int, now: Long = System.currentTimeMillis()): Long {
+            val target = java.util.Calendar.getInstance().apply {
+                timeInMillis = now
+                set(java.util.Calendar.HOUR_OF_DAY, hour.coerceIn(0, 23))
+                set(java.util.Calendar.MINUTE, 0)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            if (target.timeInMillis <= now) target.add(java.util.Calendar.DAY_OF_YEAR, 1)
+            return target.timeInMillis - now
         }
     }
 }

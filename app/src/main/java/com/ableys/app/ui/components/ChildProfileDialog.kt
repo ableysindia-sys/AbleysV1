@@ -28,6 +28,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.platform.LocalContext
+import com.ableys.app.data.content.PhysicalCues
+import com.ableys.app.data.ledger.MovementReminderWorker
+import com.ableys.app.data.settings.CaregiverPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,6 +67,15 @@ fun ChildProfileDialog(
     var name by remember { mutableStateOf(profile?.name ?: "Aarav") }
     var age by remember { mutableIntStateOf(profile?.age ?: 5) }
     var supportEnabled by remember { mutableStateOf(profile?.supportLayerEnabled ?: true) }
+
+    // App-level, not child-level: the phone belongs to the caregiver, and these follow them
+    // across whichever child's profile is active.
+    val context = LocalContext.current
+    var remindersOn by remember { mutableStateOf(CaregiverPreferences.remindersEnabled(context)) }
+    var reminderHour by remember { mutableIntStateOf(CaregiverPreferences.reminderHour(context)) }
+    var hinglish by remember {
+        mutableStateOf(CaregiverPreferences.language(context) == PhysicalCues.Language.HINGLISH)
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -237,6 +251,144 @@ fun ChildProfileDialog(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = AbleyIvory),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Daily movement reminder",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = AbleyInk
+                                    )
+                                )
+                                Text(
+                                    text = "Only on days you haven't moved yet. Never a count of what was missed.",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = AbleyInk.copy(alpha = 0.65f),
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                            Switch(
+                                checked = remindersOn,
+                                onCheckedChange = {
+                                    remindersOn = it
+                                    CaregiverPreferences.setRemindersEnabled(context, it)
+                                    MovementReminderWorker.schedule(context)
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = AbleyCoral,
+                                    checkedTrackColor = AbleyCoralLight,
+                                    uncheckedThumbColor = Color.Gray,
+                                    uncheckedTrackColor = AbleySand
+                                ),
+                                modifier = Modifier.testTag("reminder_switch")
+                            )
+                        }
+
+                        if (remindersOn) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Around",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = AbleyInk)
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    HourStep(
+                                        label = "−",
+                                        testTag = "reminder_hour_down",
+                                        onClick = {
+                                            reminderHour = (reminderHour + 23) % 24
+                                            CaregiverPreferences.setReminderHour(context, reminderHour)
+                                            MovementReminderWorker.schedule(context)
+                                        }
+                                    )
+                                    Text(
+                                        text = hourLabel(reminderHour),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = AbleyCoral
+                                        ),
+                                        modifier = Modifier
+                                            .padding(horizontal = 14.dp)
+                                            .testTag("reminder_hour_value")
+                                    )
+                                    HourStep(
+                                        label = "+",
+                                        testTag = "reminder_hour_up",
+                                        onClick = {
+                                            reminderHour = (reminderHour + 1) % 24
+                                            CaregiverPreferences.setReminderHour(context, reminderHour)
+                                            MovementReminderWorker.schedule(context)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = AbleyIvory),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Hinglish session cues",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = AbleyInk
+                                )
+                            )
+                            Text(
+                                text = "Set it once here so every session opens in the right language for whoever is running it.",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = AbleyInk.copy(alpha = 0.65f),
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                        Switch(
+                            checked = hinglish,
+                            onCheckedChange = {
+                                hinglish = it
+                                CaregiverPreferences.setLanguage(
+                                    context,
+                                    if (it) PhysicalCues.Language.HINGLISH else PhysicalCues.Language.ENGLISH
+                                )
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = AbleyCoral,
+                                checkedTrackColor = AbleyCoralLight,
+                                uncheckedThumbColor = Color.Gray,
+                                uncheckedTrackColor = AbleySand
+                            ),
+                            modifier = Modifier.testTag("hinglish_switch")
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
@@ -255,6 +407,36 @@ fun ChildProfileDialog(
                     )
                 }
             }
+        }
+    }
+}
+
+
+/** 17 -> "5 PM". Twelve-hour, because that is how the time of day is spoken in the home. */
+internal fun hourLabel(hour: Int): String {
+    val suffix = if (hour < 12) "AM" else "PM"
+    val twelve = when (hour % 12) {
+        0 -> 12
+        else -> hour % 12
+    }
+    return "$twelve $suffix"
+}
+
+@Composable
+private fun HourStep(label: String, testTag: String, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color.White,
+        modifier = Modifier.size(44.dp).clickable(onClick = onClick).testTag(testTag)
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = AbleyCoral
+                )
+            )
         }
     }
 }
