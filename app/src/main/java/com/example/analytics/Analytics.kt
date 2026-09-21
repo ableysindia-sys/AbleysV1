@@ -49,6 +49,8 @@ object Analytics {
     const val MEMORY_CAPTURED = "memory_captured"
     const val ONBOARDING_COMPLETED = "onboarding_completed"
     const val CHILD_ADDED = "child_added"
+    const val CONTENT_UPDATED = "content_updated"
+    const val CONTENT_REJECTED = "content_rejected"
     const val CHILD_SWITCHED = "child_switched"
     const val MOVE_ACTIVITY_COMPLETED = "move_activity_completed"
     const val PROGRAM_DAY_COMPLETED = "program_day_completed"
