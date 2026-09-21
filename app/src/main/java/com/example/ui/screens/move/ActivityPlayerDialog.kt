@@ -76,6 +76,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 import com.example.play.feedback.AmbientSound
 import com.example.ui.play.BubblePopGame
+import com.example.telemetry.CrashReporter
 
 @Composable
 fun ActivityPlayerDialog(
@@ -86,6 +87,14 @@ fun ActivityPlayerDialog(
     modifier: Modifier = Modifier
 ) {
     val playerContext = LocalContext.current
+
+    // A null pointer in the physics loop says nothing about which activity was on screen. This
+    // is the line that turns an unreadable stack trace into a reproducible one. Ids only --
+    // titles are content and content is where a child's name ends up.
+    LaunchedEffect(activity.id) {
+        CrashReporter.setPlayMode(activity.playMode.name)
+        CrashReporter.breadcrumb("activity start ${activity.id} mode=${activity.playMode.name}")
+    }
     val ambient = remember { AmbientSound() }
     var soundOn by remember { mutableStateOf(false) }
 

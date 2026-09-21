@@ -7,6 +7,7 @@ import com.example.data.wire.ContentBundle
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.io.File
+import com.example.telemetry.CrashReporter
 
 /**
  * The bundle the app trusts, and the rules for replacing it.
@@ -126,6 +127,11 @@ class ContentStore(private val context: Context) {
             currentFile.writeText(adapter.toJson(parsed))
             incoming.delete()
             Log.i(TAG, "rotated in content version ${parsed.version}")
+            // Content arrives from a CDN independently of the app version, so a crash might be
+            // a code bug or one malformed string in one publish. Without this on the report the
+            // two are indistinguishable in a dashboard.
+            CrashReporter.setContentVersion(parsed.version)
+            CrashReporter.breadcrumb("content rotated to v${parsed.version}")
             emptyList<String>()
         }.getOrElse {
             incoming.delete()

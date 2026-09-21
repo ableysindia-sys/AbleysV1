@@ -63,6 +63,7 @@ import com.example.ui.theme.AbleySand
 import com.example.ui.theme.AbleyTeal
 import androidx.compose.ui.platform.LocalContext
 import kotlin.math.abs
+import com.example.telemetry.CrashReporter
 
 /**
  * The session player rebuilt for whoever is actually running the session.
@@ -91,6 +92,10 @@ fun CaregiverSessionPlayer(
 ) {
     val context = LocalContext.current
     val chimes = remember { SessionChimes() }
+
+    LaunchedEffect(program.id) {
+        CrashReporter.breadcrumb("session start ${program.id} w${program.weekNumber}s${program.sessionNumber}")
+    }
     DisposableEffect(chimes) { onDispose { chimes.release() } }
 
     var language by remember { mutableStateOf(PhysicalCues.Language.ENGLISH) }

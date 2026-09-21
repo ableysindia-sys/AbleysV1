@@ -52,9 +52,14 @@ import com.example.viewmodel.NavigationTab
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.ui.screens.support.CaregiverSessionPlayer
+import com.example.telemetry.Redactor
+import com.example.telemetry.CrashReporter
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // An anonymous per-install id, so crash-free-install rates are countable without any of
+        // it being joinable back to a family.
+        CrashReporter.start(applicationContext)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -135,6 +140,12 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
         .toSet()
 
     val childName = childProfile?.name ?: "Aarav"
+
+    // The redactor is only as good as what it knows to strip. Every child on the device goes in,
+    // from memory, never to disk and never to a sink.
+    LaunchedEffect(allChildren) {
+        Redactor.knownNames = allChildren.map { it.name }.filter { it.isNotBlank() }.toSet()
+    }
     val showSupportTab = childProfile?.supportLayerEnabled ?: true
 
     // Onboarding and the full-screen details own the whole window; the app chrome would only

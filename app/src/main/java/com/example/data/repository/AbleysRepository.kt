@@ -40,6 +40,8 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.telemetry.CrashReporter
+import kotlinx.coroutines.CoroutineExceptionHandler
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AbleysRepository(context: Context) {
@@ -86,11 +88,18 @@ class AbleysRepository(context: Context) {
     /** The catalogue is shared: a product is owned by the household, not by one child. */
     val equipmentFlow: Flow<List<EquipmentProduct>> = equipmentDao.getAllEquipmentFlow()
 
+    private val seedExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        CrashReporter.record(throwable, context = "seedInitialDataIfNeeded")
+    }
+
     private suspend fun activeChildId(): String =
         childDao.getActiveProfile()?.id ?: DEFAULT_CHILD_ID
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        // This scope is the app's only unsupervised one, and it does the first database write
+        // of a new install. An exception here used to vanish: no crash, no log, and a family
+        // looking at an app with no content and nothing anywhere saying why.
+        CoroutineScope(Dispatchers.IO + seedExceptionHandler).launch {
             seedInitialDataIfNeeded()
         }
     }
