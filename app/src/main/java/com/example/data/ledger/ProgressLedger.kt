@@ -26,7 +26,12 @@ import java.util.UUID
 class ProgressLedger(
     private val events: ProgressEventDao,
     private val children: ChildProfileDao,
-    private val skills: SkillDao
+    private val skills: SkillDao,
+    /**
+     * Optional so the ledger can be constructed without the achievement side in tests that are
+     * only about events. When present, every append re-checks the badges.
+     */
+    private val achievements: AchievementEvaluator? = null
 ) {
     // Sequence allocation has to be serialised or two concurrent completions collide on the same
     // number, and ordering is the one thing this design cannot get wrong.
@@ -83,6 +88,10 @@ class ProgressLedger(
                 lastActiveDay = movementDays.lastOrNull()
             )
         )
+
+        // Badges are a projection of the same ledger. Failing to award one must not fail the
+        // append that earned it, so this cannot throw into the caller.
+        runCatching { achievements?.evaluate(childId) }
 
         // Per-area skill progress is a projection too, so a rebuild fixes it as well.
         SkillArea.entries.forEach { area ->

@@ -12,7 +12,7 @@ import com.example.data.model.Achievement
 object AchievementCatalogue {
     val locked: List<Achievement> = listOf(
         Achievement("7_day_explorer", "7 Day Explorer", "Explored activities 7 days in a row", "7", false, 0, 7, null),
-        Achievement("30_day_movement", "30 Day Movement", "Completed 30 movement sessions together", "30", false, 0, 30, null),
+        Achievement("30_day_movement", "30 Day Movement", "Moved together on 30 different days", "30", false, 0, 30, null),
         Achievement("100_skills", "100 Skills Mastered", "Mastered 100 developmental game goals", "100", false, 0, 100, null),
         Achievement("365_moments", "365 Moments", "Captured a memory for every day of the year", "365", false, 0, 365, null),
         Achievement("little_adventurer", "Little Adventurer", "Tried all 6 Move activity formats", "\ud83c\udf10", false, 0, 6, null),

@@ -42,6 +42,7 @@ import java.util.Date
 import java.util.Locale
 import com.example.telemetry.CrashReporter
 import kotlinx.coroutines.CoroutineExceptionHandler
+import com.example.data.ledger.AchievementEvaluator
 import com.example.data.ledger.ProgressEvent
 import com.example.data.ledger.ProgressLedger
 
@@ -70,7 +71,17 @@ class AbleysRepository(context: Context) {
      * because neither remembers what it was counting. The ledger can be merged by anyone, in any
      * order, by union and deduplication on the event id.
      */
-    private val ledger = ProgressLedger(progressEventDao, childDao, skillDao)
+    private val achievementEvaluator = AchievementEvaluator(
+        events = progressEventDao,
+        achievements = achievementDao,
+        memories = memoryDao,
+        formatOf = { id -> activityById(id)?.format },
+        areaOf = { id ->
+            activityById(id)?.targetArea?.let { area -> SkillArea.entries.firstOrNull { it.id == area } }
+        }
+    )
+
+    private val ledger = ProgressLedger(progressEventDao, childDao, skillDao, achievementEvaluator)
 
     /** Days the active child physically moved, for the streak week strip. */
     suspend fun movementDays(): List<String> = progressEventDao.movementDays(activeChildId())
@@ -503,12 +514,6 @@ class AbleysRepository(context: Context) {
                 iconEmoji = "🏃"
             )
         )
-
-        // Check if movement 500 milestone achieved
-        val profile = childDao.getActiveProfile()
-        if (profile != null && profile.minutesMoved >= 500) {
-            achievementDao.unlockAchievement(activeChildId(), "movement_500", "Earned today")
-        }
 
         "Completed ${activity.title}! +${activity.xpReward} XP earned."
     }

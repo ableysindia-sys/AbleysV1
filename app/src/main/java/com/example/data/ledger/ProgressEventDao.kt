@@ -72,4 +72,37 @@ interface ProgressEventDao {
 
     @Query("SELECT COUNT(*) FROM progress_events")
     suspend fun count(): Int
+
+    // --- achievement thresholds ---
+
+    @Query("SELECT COUNT(*) FROM progress_events WHERE childId = :childId AND eventType = :type")
+    suspend fun countOfType(childId: String, type: String): Int
+
+    @Query(
+        "SELECT COUNT(DISTINCT localDay) FROM progress_events " +
+            "WHERE childId = :childId AND eventType = :type"
+    )
+    suspend fun distinctDaysOfType(childId: String, type: String): Int
+
+    @Query(
+        "SELECT DISTINCT localDay FROM progress_events " +
+            "WHERE childId = :childId AND eventType = :type AND subjectId = :subjectId"
+    )
+    suspend fun daysOfSubject(childId: String, type: String, subjectId: String): List<String>
+
+    /**
+     * Subject and day for every event of a type.
+     *
+     * Two badges -- all six activity formats, and five days of everyday independence -- depend on
+     * what an activity *is*, which the ledger deliberately does not store. Resolving the id
+     * against the catalogue in Kotlin keeps content knowledge out of the event rows, at the cost
+     * of reading a few hundred short pairs.
+     */
+    @Query(
+        "SELECT subjectId, localDay FROM progress_events " +
+            "WHERE childId = :childId AND eventType = :type"
+    )
+    suspend fun subjectDays(childId: String, type: String): List<SubjectDay>
 }
+
+data class SubjectDay(val subjectId: String, val localDay: String)

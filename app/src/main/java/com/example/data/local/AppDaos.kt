@@ -81,6 +81,9 @@ interface MemoryDao {
     @Query("SELECT * FROM memories WHERE childId = :childId ORDER BY timestamp DESC")
     fun getAllMemoriesFlow(childId: String): Flow<List<MemoryItem>>
 
+    @Query("SELECT * FROM memories WHERE childId = :childId ORDER BY timestamp DESC")
+    suspend fun memoriesFor(childId: String): List<MemoryItem>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMemory(memory: MemoryItem): Long
 
@@ -98,6 +101,9 @@ interface AchievementDao {
 
     @Query("SELECT COUNT(*) FROM achievements WHERE childId = :childId")
     suspend fun countForChild(childId: String): Int
+
+    @Query("SELECT * FROM achievements WHERE childId = :childId")
+    suspend fun forChild(childId: String): List<Achievement>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(achievements: List<Achievement>)
