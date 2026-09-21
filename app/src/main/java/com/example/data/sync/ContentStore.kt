@@ -66,14 +66,20 @@ class ContentStore(private val context: Context) {
      * the app -- it keeps what it has -- but it is an error state for whoever published, so the
      * reasons are returned rather than swallowed.
      */
-    fun promote(incoming: File): List<String> {
+    fun promote(incoming: File, declaredVersion: Int): List<String> {
         if (!incoming.exists()) return listOf("incoming bundle missing")
 
-        val parsed = runCatching { adapter.fromJson(incoming.readText()) }.getOrNull()
+        val raw = runCatching { adapter.fromJson(incoming.readText()) }.getOrNull()
             ?: run {
                 incoming.delete()
                 return listOf("incoming bundle is not valid JSON for this schema")
             }
+
+        // The published file carries no version, so that identical content always hashes to the
+        // same filename and the edge never stores two copies of the same thing. The version is
+        // the pointer's, and it is stamped in here before validation, so whatever lands on disk
+        // is self-describing from that moment on.
+        val parsed = raw.copy(version = declaredVersion)
 
         val problems = ContentValidator.check(parsed)
         if (problems.isNotEmpty()) {
@@ -88,19 +94,14 @@ class ContentStore(private val context: Context) {
             return listOf("incoming version ${parsed.version} is not newer than $existing")
         }
 
-        return if (incoming.renameTo(currentFile)) {
+        return runCatching {
+            currentFile.writeText(adapter.toJson(parsed))
+            incoming.delete()
             Log.i(TAG, "rotated in content version ${parsed.version}")
-            emptyList()
-        } else {
-            // Rename across the same directory should not fail; copy rather than lose the update.
-            runCatching {
-                currentFile.writeText(incoming.readText())
-                incoming.delete()
-                emptyList<String>()
-            }.getOrElse {
-                incoming.delete()
-                listOf("could not rotate bundle into place: ${it.message}")
-            }
+            emptyList<String>()
+        }.getOrElse {
+            incoming.delete()
+            listOf("could not rotate bundle into place: ${it.message}")
         }
     }
 }

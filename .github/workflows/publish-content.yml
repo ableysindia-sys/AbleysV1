@@ -1,0 +1,109 @@
+name: Publish content bundle
+
+# Triggered by a CMS publish webhook, or by hand for a rollback.
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_bundle:
+        description: >
+          Filename of an older content_v<hash>.json to re-point at. Leave blank for a normal
+          publish. The client refuses any version that is not newer than the one it holds, so a
+          rollback is a NEW version number pointing at an OLD bundle -- never a lower number.
+        required: false
+        type: string
+  repository_dispatch:
+    types: [cms-publish]
+
+concurrency:
+  # Two publishes racing would interleave their pointer writes and could leave latest.json
+  # pointing at a bundle from the losing run.
+  group: publish-content
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Generate and validate
+        if: ${{ !inputs.rollback_bundle }}
+        env:
+          # GITHUB_RUN_NUMBER is monotonic for this workflow and never reused, which is exactly
+          # what the client's version rule needs. A timestamp would not be: two runs in the same
+          # second collide, and a clock correction can go backwards.
+          CONTENT_VERSION: ${{ github.run_number }}
+        run: ./tools/publish-content.sh
+
+      - name: Stage a rollback pointer
+        if: ${{ inputs.rollback_bundle }}
+        run: |
+          mkdir -p dist
+          # No bundle is uploaded: the old one is still at the edge, immutable and cached.
+          printf '{"version": %s, "bundle": "%s"}\n' \
+            "${{ github.run_number }}" "${{ inputs.rollback_bundle }}" > dist/latest.json
+          cat dist/latest.json
+
+      - name: Configure credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.CONTENT_PUBLISH_ROLE }}
+          aws-region: ap-south-1
+
+      # STEP ONE. The bundle goes up first and alone.
+      #
+      # Uploading both files together is a race: between the pointer landing and the bundle
+      # landing, every device that polls gets a 404 on a bundle that latest.json promises exists.
+      # Immutable caching makes it worse, because some edges will cache that 404.
+      - name: Upload the bundle
+        if: ${{ !inputs.rollback_bundle }}
+        run: |
+          aws s3 cp dist/content_v*.json "s3://${{ secrets.CONTENT_BUCKET }}/app-content/" \
+            --cache-control "public, max-age=31536000, immutable" \
+            --content-type "application/json"
+
+      # STEP TWO. Prove it is fetchable before anything points at it.
+      - name: Verify the bundle is live at the edge
+        if: ${{ !inputs.rollback_bundle }}
+        run: |
+          BUNDLE="$(basename dist/content_v*.json)"
+          for attempt in 1 2 3 4 5; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' "https://cdn.ableys.in/app-content/$BUNDLE")"
+            [[ "$code" == "200" ]] && { echo "$BUNDLE is live"; exit 0; }
+            echo "attempt $attempt: got $code, waiting"; sleep 5
+          done
+          echo "Bundle never became fetchable. Pointer NOT updated." >&2
+          exit 1
+
+      # STEP THREE. Only now does the pointer move.
+      #
+      # must-revalidate rather than a long max-age: the whole design rests on the client's
+      # conditional request actually reaching the origin. A pointer cached for an hour at the
+      # edge is an hour where a correction to clinical content does not exist.
+      - name: Upload the pointer
+        run: |
+          aws s3 cp dist/latest.json "s3://${{ secrets.CONTENT_BUCKET }}/app-content/latest.json" \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --content-type "application/json"
+
+      # STEP FOUR. Purge the pointer only. The hashed bundle is immutable and must stay cached.
+      - name: Invalidate the pointer
+        run: |
+          curl -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"files":["https://cdn.ableys.in/app-content/latest.json"]}' \
+            --fail
+
+      - name: Summary
+        run: |
+          echo "### Content published" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat dist/latest.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

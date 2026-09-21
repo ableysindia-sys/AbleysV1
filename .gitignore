@@ -16,3 +16,6 @@
 local.properties
 .env
 debug.keystore
+
+# Staged content bundles, produced by tools/publish-content.sh
+dist/

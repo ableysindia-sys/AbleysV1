@@ -71,7 +71,7 @@ class ContentSync(
                 return@withContext Result.Unavailable("bundle download failed")
             }
 
-            val problems = store.promote(temp)
+            val problems = store.promote(temp, pointer.version)
             if (problems.isEmpty()) {
                 Analytics.track(
                     Analytics.CONTENT_UPDATED,
