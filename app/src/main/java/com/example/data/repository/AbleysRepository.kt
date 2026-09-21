@@ -72,6 +72,9 @@ class AbleysRepository(context: Context) {
      */
     private val ledger = ProgressLedger(progressEventDao, childDao, skillDao)
 
+    /** Days the active child physically moved, for the streak week strip. */
+    suspend fun movementDays(): List<String> = progressEventDao.movementDays(activeChildId())
+
     /** Every child on this device, for the switcher. */
     val allChildrenFlow: Flow<List<ChildProfile>> = childDao.getAllProfilesFlow()
 

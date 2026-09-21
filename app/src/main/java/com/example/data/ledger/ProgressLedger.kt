@@ -70,13 +70,17 @@ class ProgressLedger(
         val xp = events.totalXp(childId)
         val minutes = events.totalMinutes(childId)
         val days = events.activeDays(childId)
+        val movementDays = events.movementDays(childId)
+        val today = ProgressEvent.localDayOf(System.currentTimeMillis())
 
         children.insertOrUpdateProfile(
             profile.copy(
                 totalXp = xp,
                 level = levelFor(xp),
                 minutesMoved = minutes,
-                activeDays = days
+                activeDays = days,
+                currentStreak = StreakCalculator.streakOn(movementDays, today),
+                lastActiveDay = movementDays.lastOrNull()
             )
         )
 

@@ -32,6 +32,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import com.example.data.ledger.ProgressEvent
+import com.example.data.ledger.StreakCalculator
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,31 +55,46 @@ import com.example.ui.theme.DmSansFontFamily
 import com.example.ui.theme.PoppinsFontFamily
 
 /**
- * Daily Streak Counter Widget for the 'Move' Tab
- * Tracks consecutive days of activity utilizing the high-contrast Coral (#EE4A41) palette.
+ * Daily movement counter for the 'Move' tab.
+ *
+ * The number counts days moved inside the current run, not consecutive calendar days: a single
+ * missed day is forgiven, so a family alternating days keeps building. That is deliberate -- an
+ * every-single-day counter punishes an ill week -- but it means this widget must not say "in a
+ * row", because for many families it would not be true.
  * Designed with Nike Training Club / Apple Fitness+ inspired editorial typography.
  */
 @Composable
 fun MoveDailyStreakCounterWidget(
     currentStreakDays: Int,
+    /** YYYY-MM-DD days this child moved. Drives the week dots. */
+    movementDays: List<String> = emptyList(),
     nextMilestoneDays: Int = 14,
     modifier: Modifier = Modifier,
     onStreakClick: () -> Unit = {}
 ) {
     var isCelebrated by remember { mutableStateOf(false) }
 
-    // Weekday indicators data (Mon - Sun)
-    // For a 12-day streak, past days are active, today is active
-    val daysOfWeek = remember {
-        listOf(
-            DayStreakInfo("M", "Mon", isCompleted = true, isToday = false),
-            DayStreakInfo("T", "Tue", isCompleted = true, isToday = false),
-            DayStreakInfo("W", "Wed", isCompleted = true, isToday = false),
-            DayStreakInfo("T", "Thu", isCompleted = true, isToday = false),
-            DayStreakInfo("F", "Fri", isCompleted = true, isToday = false),
-            DayStreakInfo("S", "Sat", isCompleted = true, isToday = true), // Current active day
-            DayStreakInfo("S", "Sun", isCompleted = false, isToday = false) // Upcoming
-        )
+    // The last seven calendar days, ending today. Filled where the child actually moved, so a
+    // forgiven gap is visible rather than papered over.
+    val daysOfWeek = remember(movementDays) {
+        val today = ProgressEvent.localDayOf(System.currentTimeMillis())
+        val moved = movementDays.toSet()
+        StreakCalculator.recentDays(today, 7).map { day ->
+            val calendar = java.util.GregorianCalendar(java.util.TimeZone.getTimeZone("UTC")).apply {
+                clear()
+                val parts = day.split("-")
+                set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
+            }
+            val label = java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault())
+                .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+                .format(calendar.time)
+            DayStreakInfo(
+                letter = label.take(1).uppercase(java.util.Locale.getDefault()),
+                label = label,
+                isCompleted = day in moved,
+                isToday = day == today
+            )
+        }
     }
 
     val progressToMilestone = (currentStreakDays.toFloat() / nextMilestoneDays.toFloat()).coerceIn(0f, 1f)
@@ -124,7 +141,7 @@ fun MoveDailyStreakCounterWidget(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "DAILY STREAK COUNTER",
+                            text = "MOVEMENT COUNTER",
                             fontFamily = DmSansFontFamily,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
@@ -185,7 +202,7 @@ fun MoveDailyStreakCounterWidget(
                             modifier = Modifier.testTag("streak_days_count")
                         )
                         Text(
-                            text = "DAYS IN A ROW",
+                            text = "ACTIVE DAYS",
                             fontFamily = PoppinsFontFamily,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
@@ -197,7 +214,7 @@ fun MoveDailyStreakCounterWidget(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = "Consecutive physical play & shared movement",
+                        text = "Physical play and shared movement. A missed day is forgiven.",
                         fontFamily = DmSansFontFamily,
                         fontWeight = FontWeight.Normal,
                         fontSize = 13.sp,

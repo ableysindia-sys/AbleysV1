@@ -19,10 +19,12 @@ data class ChildProfile(
     val isOnboarded: Boolean = false,
     val totalXp: Int = 1240,
     val level: Int = 7,
-    val currentStreak: Int = 12,
+    val currentStreak: Int = 0,
     val minutesMoved: Int = 248,
     val activeDays: Int = 18,
-    val lastActiveTimestamp: Long = System.currentTimeMillis()
+    val lastActiveTimestamp: Long = System.currentTimeMillis(),
+    /** YYYY-MM-DD of the last day this child moved, in their own timezone. Null until they do. */
+    val lastActiveDay: String? = null
 )
 
 enum class SkillArea(

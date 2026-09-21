@@ -1,6 +1,7 @@
 package com.example
 
 import android.app.Application
+import com.example.data.ledger.MovementReminderWorker
 import com.example.data.ledger.ProgressSyncWorker
 import com.example.data.sync.ContentStore
 import com.example.data.sync.ContentSyncWorker
@@ -33,5 +34,7 @@ class AbleysApp : Application() {
             .onFailure { CrashReporter.record(it, "content_sync_schedule_failed") }
         runCatching { ProgressSyncWorker.schedule(this) }
             .onFailure { CrashReporter.record(it, "progress_sync_schedule_failed") }
+        runCatching { MovementReminderWorker.schedule(this) }
+            .onFailure { CrashReporter.record(it, "reminder_schedule_failed") }
     }
 }

@@ -242,6 +242,9 @@ class MoveAndGrowTabsRobolectricTest {
                 ) {
                     com.example.ui.screens.move.MoveDailyStreakCounterWidget(
                         currentStreakDays = 12,
+                        movementDays = com.example.data.ledger.StreakCalculator.recentDays(
+                            com.example.data.ledger.ProgressEvent.localDayOf(System.currentTimeMillis()), 7
+                        ),
                         nextMilestoneDays = 14,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -251,11 +254,11 @@ class MoveAndGrowTabsRobolectricTest {
 
         // Verify Daily Streak Counter Widget is present
         composeTestRule.onNodeWithTag("move_daily_streak_widget").assertIsDisplayed()
-        composeTestRule.onNodeWithText("DAILY STREAK COUNTER").assertIsDisplayed()
+        composeTestRule.onNodeWithText("MOVEMENT COUNTER").assertIsDisplayed()
         composeTestRule.onNodeWithText("ACTIVE").assertIsDisplayed()
         composeTestRule.onNodeWithTag("streak_days_count").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
-        composeTestRule.onNodeWithText("DAYS IN A ROW").assertIsDisplayed()
+        composeTestRule.onNodeWithText("ACTIVE DAYS").assertIsDisplayed()
 
         // Verify 7-day indicators
         composeTestRule.onNodeWithTag("streak_day_indicator_0").performScrollTo().assertIsDisplayed()

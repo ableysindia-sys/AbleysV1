@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.example.data.model.MoveProgram
@@ -45,6 +46,14 @@ class AbleysViewModel(application: Application) : AndroidViewModel(application) 
 
     val childProfile: StateFlow<ChildProfile?> = repository.childProfileFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /**
+     * Recomputed whenever the profile changes. Every ledger append re-projects the profile, so
+     * the profile flow is the signal that movement happened.
+     */
+    val movementDays: StateFlow<List<String>> = repository.childProfileFlow
+        .map { runCatching { repository.movementDays() }.getOrDefault(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val skillProgressList: StateFlow<List<SkillProgress>> = repository.skillProgressFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

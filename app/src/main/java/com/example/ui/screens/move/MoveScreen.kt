@@ -86,6 +86,8 @@ fun MoveScreen(
     programs: List<MoveProgram> = emptyList(),
     programProgress: Map<String, Int> = emptyMap(),
     onSelectProgram: (MoveProgram) -> Unit = {},
+    /** YYYY-MM-DD days this child moved, for the week dots. */
+    movementDays: List<String> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val childName = childProfile?.name ?: "Aarav"
@@ -162,7 +164,8 @@ fun MoveScreen(
 
                 // Daily Streak Counter Widget (High-Contrast Coral #EE4A41 Palette)
                 MoveDailyStreakCounterWidget(
-                    currentStreakDays = childProfile?.currentStreak ?: 12,
+                    currentStreakDays = childProfile?.currentStreak ?: 0,
+                    movementDays = movementDays,
                     nextMilestoneDays = 14,
                     modifier = Modifier.fillMaxWidth()
                 )

@@ -54,6 +54,19 @@ interface ProgressEventDao {
     @Query("SELECT COUNT(DISTINCT localDay) FROM progress_events WHERE childId = :childId")
     suspend fun activeDays(childId: String): Int
 
+    /**
+     * The days this child physically moved, oldest first.
+     *
+     * minutesMoved > 0 is what separates movement from the rest of the ledger: skill games and
+     * captured memories carry XP but no minutes, and a streak that counted them would tell a
+     * family they had been moving when they had been tapping.
+     */
+    @Query(
+        "SELECT DISTINCT localDay FROM progress_events " +
+            "WHERE childId = :childId AND minutesMoved > 0 ORDER BY localDay"
+    )
+    suspend fun movementDays(childId: String): List<String>
+
     @Query("SELECT * FROM progress_events WHERE childId = :childId ORDER BY sequence")
     suspend fun allFor(childId: String): List<ProgressEvent>
 

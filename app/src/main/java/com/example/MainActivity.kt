@@ -90,6 +90,7 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
     val allChildren by viewModel.allChildren.collectAsStateWithLifecycle()
     val addingChild by viewModel.addingChild.collectAsStateWithLifecycle()
     val moveProgramProgress by viewModel.moveProgramProgress.collectAsStateWithLifecycle()
+    val movementDays by viewModel.movementDays.collectAsStateWithLifecycle()
     val activeMovePlayerActivity by viewModel.activeMovePlayerActivity.collectAsStateWithLifecycle()
 
     val selectedTherapyProgram by viewModel.selectedTherapyProgram.collectAsStateWithLifecycle()
@@ -300,7 +301,8 @@ fun AbleysApp(viewModel: AbleysViewModel = viewModel()) {
                                 onStartActivityNow = { viewModel.startMovePlayer(it) },
                                 programs = viewModel.movePrograms,
                                 programProgress = programDayCounts,
-                                onSelectProgram = { viewModel.selectMoveProgram(it) }
+                                onSelectProgram = { viewModel.selectMoveProgram(it) },
+                                movementDays = movementDays
                             )
                         }
                         NavigationTab.STORY -> {
