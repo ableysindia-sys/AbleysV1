@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.content.PhysicalCues
+import com.example.data.settings.CaregiverPreferences
 import com.example.data.model.TherapyProgram
 import com.example.play.feedback.Haptics
 import com.example.play.feedback.SessionChimes
@@ -98,7 +99,9 @@ fun CaregiverSessionPlayer(
     }
     DisposableEffect(chimes) { onDispose { chimes.release() } }
 
-    var language by remember { mutableStateOf(PhysicalCues.Language.ENGLISH) }
+    // Read from the phone, not defaulted: a caregiver who chose Hinglish last session should
+    // not have to choose it again every time a player opens.
+    var language by remember { mutableStateOf(CaregiverPreferences.language(context)) }
     var stepIndex by remember { mutableIntStateOf(0) }
     var elapsedInStep by remember { mutableIntStateOf(0) }
     var running by remember { mutableStateOf(true) }
@@ -207,6 +210,7 @@ fun CaregiverSessionPlayer(
                         } else {
                             PhysicalCues.Language.ENGLISH
                         }
+                        CaregiverPreferences.setLanguage(context, language)
                     }
                     .padding(horizontal = 14.dp, vertical = 10.dp)
                     .testTag("language_toggle")
