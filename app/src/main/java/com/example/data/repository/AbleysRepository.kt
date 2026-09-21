@@ -42,6 +42,8 @@ import java.util.Date
 import java.util.Locale
 import com.example.telemetry.CrashReporter
 import kotlinx.coroutines.CoroutineExceptionHandler
+import com.example.data.ledger.ProgressEvent
+import com.example.data.ledger.ProgressLedger
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AbleysRepository(context: Context) {
@@ -58,6 +60,17 @@ class AbleysRepository(context: Context) {
     private val equipmentDao = db.equipmentDao()
     private val milestoneDao = db.milestoneDao()
     private val moveProgramDao = db.moveProgramDao()
+    private val progressEventDao = db.progressEventDao()
+
+    /**
+     * Progress is appended, never incremented.
+     *
+     * The old `UPDATE ... SET totalXp = totalXp + n` is unmergeable the moment a family uses a
+     * second device: two increments against the same starting number cannot be reconciled,
+     * because neither remembers what it was counting. The ledger can be merged by anyone, in any
+     * order, by union and deduplication on the event id.
+     */
+    private val ledger = ProgressLedger(progressEventDao, childDao, skillDao)
 
     /** Every child on this device, for the switcher. */
     val allChildrenFlow: Flow<List<ChildProfile>> = childDao.getAllProfilesFlow()
@@ -465,8 +478,13 @@ class AbleysRepository(context: Context) {
             "target_area" to activity.targetArea,
             "duration_minutes" to activity.durationMinutes
         ))
-        childDao.addXp(activeChildId(), activity.xpReward)
-        childDao.addMinutesMoved(activeChildId(), activity.durationMinutes)
+        ledger.append(
+            childId = activeChildId(),
+            eventType = ProgressEvent.ACTIVITY_COMPLETE,
+            subjectId = activity.id,
+            xpEarned = activity.xpReward,
+            minutesMoved = activity.durationMinutes
+        )
 
         val currentDateStr = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date())
 
@@ -500,8 +518,13 @@ class AbleysRepository(context: Context) {
             "equipment_sku" to program.equipmentSku
         ))
         val xpGain = 45
-        childDao.addXp(activeChildId(), xpGain)
-        childDao.addMinutesMoved(activeChildId(), program.totalMinutes)
+        ledger.append(
+            childId = activeChildId(),
+            eventType = ProgressEvent.SESSION_COMPLETE,
+            subjectId = program.id,
+            xpEarned = xpGain,
+            minutesMoved = program.totalMinutes
+        )
 
         val currentDateStr = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date())
 
@@ -525,8 +548,12 @@ class AbleysRepository(context: Context) {
             "area" to area.id,
             "store_tag" to area.storeTag
         ))
-        skillDao.levelUpSkill(activeChildId(), area.id, xpReward)
-        childDao.addXp(activeChildId(), xpReward)
+        ledger.append(
+            childId = activeChildId(),
+            eventType = ProgressEvent.SKILL_GAME_COMPLETE,
+            subjectId = area.id,
+            xpEarned = xpReward
+        )
 
         val progress = skillDao.getSkillProgress(activeChildId(), area.id)
         val newLevel = progress?.currentLevel ?: 1
@@ -562,6 +589,11 @@ class AbleysRepository(context: Context) {
             Analytics.MEMORY_CAPTURED,
             mapOf("source" to "parent", "has_photo" to (photoUri != null))
         )
+        ledger.append(
+            childId = activeChildId(),
+            eventType = ProgressEvent.MEMORY_CAPTURED,
+            subjectId = if (photoUri != null) "with_photo" else "text_only"
+        )
         // The dialog passes "Today" for a moment being captured now; resolve it to a real date so
         // the timeline still reads correctly tomorrow.
         val resolvedDate = if (dateString.equals("Today", ignoreCase = true)) {
@@ -588,6 +620,11 @@ class AbleysRepository(context: Context) {
         Analytics.track(
             Analytics.PROGRAM_DAY_COMPLETED,
             mapOf("program_id" to programId, "day" to dayNumber)
+        )
+        ledger.append(
+            childId = activeChildId(),
+            eventType = ProgressEvent.PROGRAM_DAY_COMPLETE,
+            subjectId = "$programId/day$dayNumber"
         )
         moveProgramDao.markDayComplete(
             MoveProgramDayProgress(
