@@ -59,10 +59,14 @@ class AppPreviewCaptureTest {
     )
 
     private fun capture(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {
-        // Without this the test clock runs free, and a timed screen like the session player
-        // captures its own completion state rather than the frame a caregiver first sees.
+        // Left to run free, the test clock plays a timed screen to its end: the session player
+        // captured 5/5 and a finished tick rather than the frame a caregiver opens on. Frozen
+        // dead at zero is wrong the other way -- entry animations never start, so progress bars
+        // and rings render empty. Advance a fixed beat instead: long enough for those to settle,
+        // far short of any step timer.
         composeTestRule.mainClock.autoAdvance = false
         composeTestRule.setContent { AbleysTheme { content() } }
+        composeTestRule.mainClock.advanceTimeBy(1_200)
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/preview_$name.png")
     }
 
