@@ -71,6 +71,14 @@ class AppPreviewCaptureTest {
     }
 
     @Test
+    fun onboarding_first_launch() = capture("00_onboarding") {
+        com.ableys.app.ui.screens.onboarding.OnboardingScreen(
+            onComplete = {},
+            onExploreWithSampleData = {}
+        )
+    }
+
+    @Test
     fun move_tab() = capture("01_move") {
         MoveScreen(
             childProfile = profile,
