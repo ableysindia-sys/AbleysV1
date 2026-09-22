@@ -31,8 +31,8 @@ class AppStartupTest {
     fun `the application class starts without throwing`() {
         val app = ApplicationProvider.getApplicationContext<Application>()
         assertEquals(
-            "The manifest must point at AbleysApp, or the workers never get scheduled.",
-            AbleysApp::class.java, app.javaClass
+            "The manifest must point at AbleysApplication, or the workers never get scheduled.",
+            AbleysApplication::class.java, app.javaClass
         )
     }
 

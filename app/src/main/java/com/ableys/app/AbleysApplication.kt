@@ -15,7 +15,7 @@ import com.ableys.app.telemetry.CrashReporter
  * unique periodic work name -- so running it on every process start is correct rather than
  * merely harmless.
  */
-class AbleysApp : Application() {
+class AbleysApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
